@@ -8,6 +8,13 @@ import {
   resolveArchetypeByRanges,
 } from "../domain/dnaArchetypeMatch";
 import { getCasteSealUrl } from "../utils/casteSeals";
+import { proxyImageUrl } from "@/utils/imageProxy";
+
+function safeTicketCoverUrl(url?: string): string {
+  if (!url) return "";
+  const httpsUrl = url.replace(/^http:\/\/books\.google\.com\//i, "https://books.google.com/");
+  return proxyImageUrl(httpsUrl, 200);
+}
 
 export interface ArchivalTicketCardProps {
   ticketNumber?: string;
@@ -448,7 +455,7 @@ export function ArchivalTicketCard({
                         style={{ width: "7.2cqw", height: "10.8cqw" }}
                       >
                         <img
-                          src={book.coverImageUrl}
+                          src={safeTicketCoverUrl(book.coverImageUrl)}
                           alt={book.title}
                           className="w-full h-full object-cover"
                         />
@@ -573,7 +580,7 @@ export function ArchivalTicketCard({
                   style={{ width: "7.2cqw", height: "10.8cqw" }}
                 >
                   <img
-                    src={kryptoniteBook.coverImageUrl}
+                    src={safeTicketCoverUrl(kryptoniteBook.coverImageUrl)}
                     alt={kryptoniteBook.title}
                     className="w-full h-full object-cover"
                   />

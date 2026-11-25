@@ -1,9 +1,10 @@
 import { useContext, useState, useCallback, useEffect, useRef } from "react";
 import { ArrowLeft, Loader2, Swords, Copy, Compass } from "lucide-react";
 import { motion } from "motion/react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sileo } from "sileo";
+import { READING_DNA_ME_QUERY_KEY } from "@/hooks/useMyReadingDna";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { DnaStepFlow } from "./components/DnaStepFlow";
@@ -82,7 +83,10 @@ const DOC_TABS = [
 
 export default function ReadingDnaPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const isDuelPath = location.pathname === "/reading-dna/duel";
   const ticketParam = searchParams.get("ticket");
   const tabParam = searchParams.get("tab");
   const challengeParam = searchParams.get("challenge") || searchParams.get("duel");
@@ -212,7 +216,7 @@ export default function ReadingDnaPage() {
   }, [ticketKey]);
 
   const [activeTab, setActiveTab] = useState<number>(() => {
-    if (challengeParam || compareParam || withParam) return 3;
+    if (challengeParam || compareParam || withParam || isDuelPath) return 3;
     if (tabParam === "compare") return 3;
     if (tabParam === "test") return 1;
     if (tabParam === "ticket" || ticketParam) return 2;
@@ -228,9 +232,12 @@ export default function ReadingDnaPage() {
 
   const [selectedOpponentTicket, setSelectedOpponentTicket] = useState<string | null>(
     () =>
+      (compareParam && currentTicket?.ticketNumber === compareParam ? withParam : null) ||
+      (withParam && currentTicket?.ticketNumber === withParam ? compareParam : null) ||
       withParam ||
       challengeParam ||
-      (compareParam && currentTicket?.ticketNumber === compareParam ? withParam : compareParam) ||
+      compareParam ||
+      (isDuelPath && ticketParam ? ticketParam : null) ||
       (ticketParam && currentTicket?.ticketNumber !== ticketParam && tabParam === "compare"
         ? ticketParam
         : null) ||
@@ -245,12 +252,12 @@ export default function ReadingDnaPage() {
     const curWithParam = searchParams.get("with");
     const curTicketParam = searchParams.get("ticket");
 
-    if (curChallengeParam || curCompareParam || curWithParam) {
+    if (curTabParam === "test") {
+      setActiveTab(1);
+    } else if (curChallengeParam || curCompareParam || curWithParam || (isDuelPath && curTicketParam)) {
       setActiveTab(3);
     } else if (curTabParam === "compare") {
       setActiveTab(3);
-    } else if (curTabParam === "test") {
-      setActiveTab(1);
     } else if (curTabParam === "ticket" || curTicketParam) {
       setActiveTab(2);
     } else if (curTabParam === "hub") {
@@ -260,32 +267,41 @@ export default function ReadingDnaPage() {
     }
 
     const target =
+      (curCompareParam && currentTicket?.ticketNumber === curCompareParam ? curWithParam : null) ||
+      (curWithParam && currentTicket?.ticketNumber === curWithParam ? curCompareParam : null) ||
       curWithParam ||
       curChallengeParam ||
-      (curCompareParam && currentTicket?.ticketNumber === curCompareParam
-        ? curWithParam
-        : curCompareParam) ||
+      curCompareParam ||
+      (isDuelPath && curTicketParam ? curTicketParam : null) ||
       (curTicketParam && currentTicket?.ticketNumber !== curTicketParam && curTabParam === "compare"
         ? curTicketParam
         : null) ||
       null;
     setSelectedOpponentTicket(target);
-  }, [searchParams, currentTicket?.ticketNumber]);
+  }, [searchParams, isDuelPath, currentTicket?.ticketNumber]);
 
   // Определение номера билета оппонента для дуэли
   const opponentTicketNumber = selectedOpponentTicket;
 
-  // Запрос сохраненного ДНК авторизованного пользователя с сервера
+  // Запрос сохраненного ДНК авторизованного пользователя с сервера (единый queryKey с useMyReadingDna)
   const { data: myDna } = useQuery({
-    queryKey: ["readingDna", "me", user?.userId],
+    queryKey: READING_DNA_ME_QUERY_KEY,
     queryFn: getMyReadingDna,
     enabled: Boolean(user?.userId),
     staleTime: 60_000,
   });
 
-  // Автоматическая синхронизация серверного ДНК в локальное состояние
+  // Автоматическая синхронизация серверного ДНК в локальное состояние (в т.ч. при обновлении с другого устройства)
   useEffect(() => {
-    if (myDna && !currentTicket) {
+    if (!myDna) return;
+    const isOutdated =
+      !currentTicket ||
+      currentTicket.ticketNumber !== myDna.ticketNumber ||
+      currentTicket.retestCount !== myDna.retestCount ||
+      currentTicket.archetype !== myDna.archetype ||
+      currentTicket.customName !== myDna.customName;
+
+    if (isOutdated) {
       setCurrentTicket(myDna);
       try {
         localStorage.setItem(ticketKey, JSON.stringify(myDna));
@@ -295,11 +311,38 @@ export default function ReadingDnaPage() {
     }
   }, [myDna, currentTicket, ticketKey]);
 
+  // Реактивное обновление билета после фоновой привязки гостевого ДНК при входе/регистрации
+  useEffect(() => {
+    const handleDnaClaimed = (event: Event) => {
+      const claimedDna = (event as CustomEvent<ReadingDnaResponseData>).detail;
+      if (claimedDna) {
+        setCurrentTicket(claimedDna);
+        try {
+          localStorage.setItem(ticketKey, JSON.stringify(claimedDna));
+        } catch {
+          // ignore
+        }
+        queryClient.setQueryData(READING_DNA_ME_QUERY_KEY, claimedDna);
+      } else {
+        queryClient.invalidateQueries({ queryKey: READING_DNA_ME_QUERY_KEY });
+      }
+    };
+    window.addEventListener("reading-dna-claimed", handleDnaClaimed);
+    return () => {
+      window.removeEventListener("reading-dna-claimed", handleDnaClaimed);
+    };
+  }, [queryClient, ticketKey]);
+
   // Загрузка билета по параметру ?ticket=BS-XXXX-X
-  const { data: loadedTicket } = useQuery({
+  const {
+    data: loadedTicket,
+    isLoading: isLoadedTicketLoading,
+    isError: isLoadedTicketError,
+  } = useQuery({
     queryKey: ["readingDna", "ticket", ticketParam],
     queryFn: () => (ticketParam ? getReadingTicket(ticketParam) : null),
     enabled: Boolean(ticketParam),
+    retry: false,
   });
 
   // Загрузка билета оппонента (для дуэли)
@@ -392,52 +435,62 @@ export default function ReadingDnaPage() {
       setActiveTab(index);
       if (index === 1 && !dnaStartedTrackedRef.current) {
         dnaStartedTrackedRef.current = true;
-        apiTrackEvent("dna_started", { hasChallenge: Boolean(challengeParam) });
-        pushDataLayerEvent("dna_started", { has_challenge: Boolean(challengeParam) });
+        apiTrackEvent("dna_started", { hasChallenge: Boolean(challengeParam || selectedOpponentTicket) });
+        pushDataLayerEvent("dna_started", { has_challenge: Boolean(challengeParam || selectedOpponentTicket) });
       }
 
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        // Очищаем параметры дуэли при переключении табов
-        next.delete("with");
-        next.delete("compare");
-        next.delete("challenge");
-        next.delete("duel");
+      const nextParams = new URLSearchParams(searchParams);
+      // При переходе к тесту (index === 1) СОХРАНЯЕМ параметры дуэли, чтобы после запечатывания
+      // билета автоматически открылась слепая дуэль с пригласившим другом.
+      if (index !== 1 && index !== 3) {
+        nextParams.delete("with");
+        nextParams.delete("compare");
+        nextParams.delete("challenge");
+        nextParams.delete("duel");
+      }
 
-        switch (index) {
-          case 0:
-            next.delete("tab");
-            next.delete("ticket");
-            break;
-          case 1:
-            next.set("tab", "test");
-            next.delete("ticket");
-            break;
-          case 2:
-            next.set("tab", "ticket");
-            if (!isViewingOtherTicket) {
-              next.delete("ticket");
-            }
-            break;
-          case 3:
-            next.set("tab", "compare");
-            next.delete("ticket");
-            break;
-          case 4:
-            next.set("tab", "hub");
-            next.delete("ticket");
-            break;
-          default:
-            break;
-        }
-        return next;
-      });
+      switch (index) {
+        case 0:
+          nextParams.delete("tab");
+          nextParams.delete("ticket");
+          break;
+        case 1:
+          nextParams.set("tab", "test");
+          if (isDuelPath && ticketParam && !nextParams.get("challenge")) {
+            nextParams.set("challenge", ticketParam);
+          }
+          nextParams.delete("ticket");
+          break;
+        case 2:
+          nextParams.set("tab", "ticket");
+          nextParams.delete("ticket");
+          break;
+        case 3:
+          nextParams.set("tab", "compare");
+          if (!isDuelPath) {
+            nextParams.delete("ticket");
+          }
+          break;
+        case 4:
+          nextParams.set("tab", "hub");
+          nextParams.delete("ticket");
+          break;
+        default:
+          break;
+      }
+
+      if (isDuelPath && index !== 3) {
+        const qs = nextParams.toString();
+        navigate(qs ? `/reading-dna?${qs}` : "/reading-dna");
+      } else {
+        setSearchParams(nextParams);
+      }
 
       if (index !== 1) {
         setIsRetesting(false);
       }
 
-      if (index !== 3) {
+      if (index !== 1 && index !== 3) {
         setSelectedOpponentTicket(null);
         setInitialDuelResult(null);
       }
@@ -446,12 +499,24 @@ export default function ReadingDnaPage() {
         window.scrollTo({ top: 0 });
       }
     },
-    [challengeParam, isViewingOtherTicket, setSearchParams]
+    [
+      challengeParam,
+      isDuelPath,
+      navigate,
+      searchParams,
+      selectedOpponentTicket,
+      setSearchParams,
+      ticketParam,
+    ]
   );
 
   const handleResetDuel = useCallback(() => {
     setSelectedOpponentTicket(null);
     setInitialDuelResult(null);
+    if (isDuelPath) {
+      navigate("/reading-dna?tab=compare");
+      return;
+    }
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.delete("with");
@@ -461,7 +526,7 @@ export default function ReadingDnaPage() {
       next.set("tab", "compare");
       return next;
     });
-  }, [setSearchParams]);
+  }, [isDuelPath, navigate, setSearchParams]);
 
   const handleOpenDuelWith = useCallback((oppTicketNum: string) => {
     setSelectedOpponentTicket(oppTicketNum);
@@ -488,6 +553,13 @@ export default function ReadingDnaPage() {
         // ignore
       }
 
+      if (user) {
+        queryClient.setQueryData(READING_DNA_ME_QUERY_KEY, saved);
+      }
+      queryClient.invalidateQueries({ queryKey: READING_DNA_ME_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ["readingDna", "twins"] });
+      queryClient.invalidateQueries({ queryKey: ["readingDna", "stats"] });
+
       apiTrackEvent("dna_sealed", {
         ticketNumber: saved.ticketNumber,
         archetype: saved.archetype,
@@ -498,7 +570,7 @@ export default function ReadingDnaPage() {
         is_guest: !user,
       });
 
-      // Если пользователь пришёл по вызову на дуэль — автоматически проводим дуэль!
+      // Если пользователь пришёл по вызову на дуэль — автоматически проводим дуэль и открываем экран результата!
       if (
         opponentTicketNumber &&
         opponentTicketNumber.toUpperCase() !== saved.ticketNumber.toUpperCase()
@@ -515,11 +587,10 @@ export default function ReadingDnaPage() {
           pushDataLayerEvent("dna_duel", {
             compatibility: duelResult.compatibility,
           });
+          setIsRetesting(false);
           setInitialDuelResult(duelResult);
-          setSearchParams({ ticket: saved.ticketNumber });
-          setTimeout(() => {
-            handleSelectTab(3);
-          }, 350);
+          setActiveTab(3);
+          setSearchParams({ tab: "compare", with: opponentTicketNumber });
           return;
         } catch {
           // В случае ошибки переходим к билету
@@ -527,10 +598,8 @@ export default function ReadingDnaPage() {
       }
 
       setIsRetesting(false);
-      setSearchParams({ ticket: saved.ticketNumber });
-      setTimeout(() => {
-        handleSelectTab(2);
-      }, 300);
+      setActiveTab(2);
+      setSearchParams({ tab: "ticket", ticket: saved.ticketNumber });
     },
     onError: (err: Error) => {
       const message = err?.message || "Не удалось запечатать читательский билет";
@@ -747,7 +816,7 @@ export default function ReadingDnaPage() {
         image="/og-reading-dna.webp"
         breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Книжный ДНК", url: "/reading-dna" }]}
         url="/reading-dna"
-        noindex={Boolean(ticketParam || challengeParam)}
+        noindex={Boolean(ticketParam || challengeParam || compareParam || isDuelPath)}
       />
 
       <div className="w-full max-w-full flex flex-col flex-1">
@@ -862,13 +931,18 @@ export default function ReadingDnaPage() {
         </header>
 
         {/* ОСНОВНАЯ ПАПКА */}
-        <main
+        <div
           className={`rounded-b-xl sm:rounded-b-2xl rounded-tr-xl sm:rounded-tr-2xl border p-2.5 sm:p-5 shadow-2xl transition-all duration-300 flex-1 ${
             isDark
               ? "bg-[#2a1a10] border-[rgba(201,163,91,0.35)]"
               : "bg-[#e8d5ad] border-[rgba(59,110,168,0.35)]"
           }`}
         >
+          {activeTab !== 0 && (
+            <h1 className="sr-only">
+              Книжный ДНК — читательский билет и сравнение литературных вкусов
+            </h1>
+          )}
           {activeTab === 0 && (
             <motion.section
               key="doc-intro"
@@ -933,7 +1007,7 @@ export default function ReadingDnaPage() {
                       onViewTicket={() => handleSelectTab(2)}
                       onLogin={() =>
                         navigate(
-                          "/login?redirect=" + encodeURIComponent("/reading-dna?tab=test")
+                          "/auth?redirect=" + encodeURIComponent("/reading-dna?tab=test")
                         )
                       }
                     />
@@ -964,7 +1038,8 @@ export default function ReadingDnaPage() {
                         (currentStep > 0 ||
                           liveBooks.some(Boolean) ||
                           liveKryptonite !== null ||
-                          Object.values(liveAxes).some((v) => v !== 50)) && (
+                          Object.values(touchedAxes).some(Boolean) ||
+                          Object.values(liveAxes).some((v) => v > 0)) && (
                           <button
                             type="button"
                             onClick={handleResetProgress}
@@ -1093,7 +1168,59 @@ export default function ReadingDnaPage() {
                       : "bg-[#fffdf7] border-[rgba(59,110,168,0.35)]"
                   }`}
                 >
-                  {activeTicket ? (
+                  {ticketParam && isLoadedTicketLoading ? (
+                    <div className="py-10 px-4 text-center space-y-3">
+                      <Loader2 className="animate-spin mx-auto opacity-70" size={28} />
+                      <p className="text-xs sm:text-sm opacity-75">
+                        Ищем читательский билет #{ticketParam} в Архиве...
+                      </p>
+                    </div>
+                  ) : ticketParam && (isLoadedTicketError || !loadedTicket) ? (
+                    <div className="py-8 px-3 sm:px-4 text-center max-w-md mx-auto space-y-3">
+                      <h3
+                        className={`text-xl sm:text-2xl font-bold ${
+                          isDark
+                            ? "font-serif text-[#efe3cc]"
+                            : "font-['Caveat',cursive] text-2xl sm:text-3xl text-[#2e2a24]"
+                        }`}
+                      >
+                        Билет #{ticketParam} не найден
+                      </h3>
+                      <p className="text-xs sm:text-sm opacity-75 leading-relaxed">
+                        Проверьте правильность шифра или пройдите тест, чтобы получить собственный читательский билет.
+                      </p>
+                      <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                        {myDna || currentTicket ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSearchParams({ tab: "ticket" });
+                              setActiveTab(2);
+                            }}
+                            className={`px-5 py-2.5 rounded-lg text-xs font-bold text-white shadow-md cursor-pointer transition-all ${
+                              isDark
+                                ? "bg-[#8a2433] hover:bg-[#a32b3d]"
+                                : "bg-[#b3412f] hover:bg-[#c94935]"
+                            }`}
+                          >
+                            К моему билету
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSelectTab(1)}
+                            className={`px-5 py-2.5 rounded-lg text-xs font-bold text-white shadow-md cursor-pointer transition-all ${
+                              isDark
+                                ? "bg-[#8a2433] hover:bg-[#a32b3d]"
+                                : "bg-[#b3412f] hover:bg-[#c94935]"
+                            }`}
+                          >
+                            Пройти тест
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ) : activeTicket ? (
                     <div className="space-y-3.5">
                       {isViewingOtherTicket && (
                         <div
@@ -1123,10 +1250,7 @@ export default function ReadingDnaPage() {
                             {Boolean(myDna || currentTicket) && (
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setSearchParams({});
-                                  handleSelectTab(2);
-                                }}
+                                onClick={() => handleSelectTab(2)}
                                 className="px-2.5 py-1.5 rounded-lg border border-current/20 hover:bg-black/10 transition-colors cursor-pointer"
                               >
                                 К моему билету
@@ -1266,6 +1390,15 @@ export default function ReadingDnaPage() {
                       {/* Мост в каталог (Book Match) + Букстраж */}
                       <DnaBookMatchBridge
                         axes={activeTicket.axes}
+                        excludeBookIds={[
+                          ...(activeTicket.favoriteBooks ?? [])
+                            .map((b) => b.bookId)
+                            .filter((id): id is number => typeof id === "number" && id > 0),
+                          ...(typeof activeTicket.kryptoniteBook?.bookId === "number" &&
+                          activeTicket.kryptoniteBook.bookId > 0
+                            ? [activeTicket.kryptoniteBook.bookId]
+                            : []),
+                        ]}
                         theme={theme}
                         onOpenBukstrazh={handleOpenBukstrazh}
                       />
@@ -1506,7 +1639,7 @@ export default function ReadingDnaPage() {
                 </div>
               </motion.section>
             )}
-        </main>
+        </div>
       </div>
 
       {user && isAiLibrarianOpen && (

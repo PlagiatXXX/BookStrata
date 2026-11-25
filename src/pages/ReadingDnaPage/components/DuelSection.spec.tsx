@@ -1,8 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DuelSection } from "./DuelSection";
 import type { ReadingDnaResponseData, ReadingDnaDuelResultData } from "@/lib/readingDnaApi";
 import * as readingDnaApi from "@/lib/readingDnaApi";
+
+function renderDuel(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+  );
+}
 
 const { mockToPng } = vi.hoisted(() => ({
   mockToPng: vi.fn().mockResolvedValue("data:image/png;base64,fake"),
@@ -111,7 +121,7 @@ const mockDuelResult: ReadingDnaDuelResultData = {
 describe("DuelSection", () => {
   it("если у пользователя нет билета — показывает заглушку с 3 шагами и кнопкой перехода к тесту", () => {
     const handleGoToTest = vi.fn();
-    render(
+    renderDuel(
       <DuelSection
         myTicket={null}
         theme="dark"
@@ -131,7 +141,7 @@ describe("DuelSection", () => {
 
   it("если у пользователя нет билета, но есть вызов от оппонента — показывает карточку вызова со скрытыми книгами", () => {
     const handleGoToTest = vi.fn();
-    render(
+    renderDuel(
       <DuelSection
         myTicket={null}
         opponentTicket={mockOpponentTicket}
@@ -146,7 +156,7 @@ describe("DuelSection", () => {
   });
 
   it("если у пользователя есть билет — рендерит персональную ссылку-вызов и поле ввода номера билета друга", () => {
-    render(
+    renderDuel(
       <DuelSection
         myTicket={mockMyTicket}
         theme="dark"
@@ -198,7 +208,7 @@ describe("DuelSection", () => {
   });
 
   it("если передан готовый результат сравнения — рендерит вердикт, процент, радар, книги и кнопки экспорта PNG / Stories", async () => {
-    render(
+    renderDuel(
       <DuelSection
         myTicket={mockMyTicket}
         opponentTicket={mockOpponentTicket}
@@ -242,7 +252,7 @@ describe("DuelSection", () => {
 
   it("при нажатии на кнопку возврата в хаб сбрасывает карточку и вызывает onResetDuel", () => {
     const onReset = vi.fn();
-    render(
+    renderDuel(
       <DuelSection
         myTicket={mockMyTicket}
         opponentTicket={mockOpponentTicket}
@@ -277,7 +287,7 @@ describe("DuelSection", () => {
       },
     };
 
-    render(
+    renderDuel(
       <DuelSection
         myTicket={mockMyTicket}
         opponentTicket={conflictOpponent}
@@ -330,7 +340,7 @@ describe("DuelSection", () => {
       celebrity: celeb,
     });
 
-    render(
+    renderDuel(
       <DuelSection
         myTicket={mockMyTicket}
         theme="dark"
@@ -348,5 +358,6 @@ describe("DuelSection", () => {
       "href",
       "/celebrities/stephen-king"
     );
+    expect(screen.queryByText("#Стивен Кинг")).not.toBeInTheDocument();
   });
 });

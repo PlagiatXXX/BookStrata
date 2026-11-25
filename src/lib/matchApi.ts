@@ -10,6 +10,8 @@ export type MoodParams = {
   emotionalWeight?: number;
   pace?: number;
   darkness?: number;
+  scope?: number;
+  complexity?: number;
 };
 
 /** Карточка рекомендации (ответ GET /api/books/match). */
@@ -33,17 +35,22 @@ export function matchedBooksKey(
   limit: number,
   excludeSlug?: string,
   genres?: CategoryId[],
+  excludeIds?: number[],
 ) {
   const genresKey = genres && genres.length > 0 ? [...genres].sort().join(",") : null;
+  const excludeIdsKey = excludeIds && excludeIds.length > 0 ? [...excludeIds].sort((a, b) => a - b).join(",") : null;
   return [
     "book-match",
     mood.storyFocus ?? null,
     mood.emotionalWeight ?? null,
     mood.pace ?? null,
     mood.darkness ?? null,
+    mood.scope ?? null,
+    mood.complexity ?? null,
     limit,
     excludeSlug ?? null,
     genresKey,
+    excludeIdsKey,
   ] as const;
 }
 
@@ -53,14 +60,18 @@ export async function getMatchedBooks(
   limit = 3,
   excludeSlug?: string,
   genres?: CategoryId[],
+  excludeIds?: number[],
 ): Promise<MatchedBook[]> {
   const params: Record<string, string | number> = { limit };
   if (mood.storyFocus !== undefined) params.storyFocus = mood.storyFocus;
   if (mood.emotionalWeight !== undefined) params.emotionalWeight = mood.emotionalWeight;
   if (mood.pace !== undefined) params.pace = mood.pace;
   if (mood.darkness !== undefined) params.darkness = mood.darkness;
+  if (mood.scope !== undefined) params.scope = mood.scope;
+  if (mood.complexity !== undefined) params.complexity = mood.complexity;
   if (excludeSlug) params.exclude = excludeSlug;
   if (genres && genres.length > 0) params.genres = genres.join(",");
+  if (excludeIds && excludeIds.length > 0) params.excludeIds = excludeIds.join(",");
 
   const { books } = await apiClient.get<{ books: MatchedBook[] }>("/books/match", params);
   return books;

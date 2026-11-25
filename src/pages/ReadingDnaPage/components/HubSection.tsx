@@ -22,7 +22,7 @@ const HUB_ITEMS = [
     icon: "🎭",
     title: "Что читают знаменитости",
     desc: "Полки кумиров",
-    link: "/collections",
+    link: "/celebrities",
   },
   {
     icon: "📚",

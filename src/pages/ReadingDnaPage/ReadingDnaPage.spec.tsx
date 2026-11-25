@@ -41,6 +41,8 @@ vi.mock("@/lib/readingDnaApi", async (importOriginal) => {
       totalTickets: 100,
       distribution: {},
     }),
+    getReadingCelebrities: vi.fn().mockResolvedValue([]),
+    getReadingTwins: vi.fn().mockResolvedValue({ twins: [] }),
     saveReadingDna: vi.fn(),
     conductReadingDuel: vi.fn(),
     shareReadingTicket: vi.fn(),
@@ -413,6 +415,86 @@ describe("ReadingDnaPage", () => {
       // Должен открыться режим перекалибровки
       expect(await screen.findByText(/Режим архивной перекалибровки/i)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /✕ Отменить перекалибровку/i })).toBeInTheDocument();
+    });
+
+    it("при переходе с challenge-приглашения к тесту сохраняет баннер дуэли против оппонента", async () => {
+      const user = userEvent.setup();
+      vi.mocked(readingDnaApi.getReadingTicket).mockResolvedValue({
+        id: 15,
+        ticketNumber: "BS-4530-V",
+        customName: "Алиса",
+        archetype: "meaning-architect",
+        archetypeName: "Архитектор смыслов",
+        axes: { storyFocus: 70, emotionalWeight: 60, pace: 50, darkness: 40, scope: 65, complexity: 80 },
+        favoriteBooks: [],
+      } as any);
+
+      renderPage("/reading-dna?challenge=BS-4530-V", null);
+
+      const startBtn = await screen.findByRole("button", { name: /Сравнить вкусы \(пройти тест за 2 минуты\)/i });
+      await user.click(startBtn);
+
+      expect(await screen.findByText(/Документ I — Анкета читателя/i)).toBeInTheDocument();
+      expect(await screen.findByText(/Дуэль против Алиса \(#BS-4530-V\)/i)).toBeInTheDocument();
+    });
+
+    it("маршрут QR-кода /reading-dna/duel?ticket=X открывает вкладку «Сравнение вкусов»", async () => {
+      vi.mocked(readingDnaApi.getReadingTicket).mockResolvedValue({
+        id: 15,
+        ticketNumber: "BS-4530-V",
+        customName: "Алиса",
+        archetype: "meaning-architect",
+        archetypeName: "Архитектор смыслов",
+        axes: { storyFocus: 70, emotionalWeight: 60, pace: 50, darkness: 40, scope: 65, complexity: 80 },
+        favoriteBooks: [],
+      } as any);
+
+      renderPage("/reading-dna/duel?ticket=BS-4530-V", null);
+
+      expect(await screen.findByText(/Документ III — Сравнение вкусов/i)).toBeInTheDocument();
+      expect(await screen.findByText(/Алиса предлагает сравнить вкусы!/i)).toBeInTheDocument();
+    });
+
+    it("при ошибке загрузки ?ticket=BS-4040-X отображает экран «Билет не найден» вместо пустого бланка", async () => {
+      vi.mocked(readingDnaApi.getReadingTicket).mockRejectedValueOnce(new Error("Not found"));
+
+      renderPage("/reading-dna?ticket=BS-4040-X", null);
+
+      expect(await screen.findByText(/Билет #BS-4040-X не найден/i)).toBeInTheDocument();
+    });
+
+    it("при просмотре чужого билета клик по «К моему билету» возвращает к собственному билету и скрывает плашку", async () => {
+      const user = userEvent.setup();
+      vi.mocked(readingDnaApi.getMyReadingDna).mockResolvedValue({
+        id: 1,
+        ticketNumber: "BS-7777-K",
+        customName: "Мой Профиль",
+        archetype: "meaning-architect",
+        archetypeName: "Архитектор смыслов",
+        axes: { storyFocus: 80, emotionalWeight: 70, pace: 60, darkness: 50, scope: 70, complexity: 85 },
+        favoriteBooks: [],
+      } as any);
+
+      vi.mocked(readingDnaApi.getReadingTicket).mockResolvedValue({
+        id: 42,
+        ticketNumber: "BS-9999-Z",
+        customName: "Другой Читатель",
+        archetype: "truth-seeker",
+        archetypeName: "Искатель",
+        axes: { storyFocus: 60, emotionalWeight: 40, pace: 50, darkness: 30, scope: 70, complexity: 50 },
+        favoriteBooks: [],
+      } as any);
+
+      renderPage("/reading-dna?ticket=BS-9999-Z");
+
+      expect(await screen.findByText(/Билет читателя:/i)).toBeInTheDocument();
+      expect((await screen.findAllByText(/BS-9999-Z/)).length).toBeGreaterThan(0);
+
+      const myTicketBtn = await screen.findByRole("button", { name: /^К моему билету$/i });
+      await user.click(myTicketBtn);
+
+      expect((await screen.findAllByText(/BS-7777-K/)).length).toBeGreaterThan(0);
+      expect(screen.queryByText(/Билет читателя:/i)).not.toBeInTheDocument();
     });
   });
 });

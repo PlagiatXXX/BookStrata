@@ -97,6 +97,7 @@ export function BookChipInput({
   const [isManualAuthorOpen, setIsManualAuthorOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [loadingQuickTitle, setLoadingQuickTitle] = useState<string | null>(null);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -156,14 +157,28 @@ export function BookChipInput({
 
   const handleAddBook = useCallback(
     (book: DnaBookItemData) => {
-      if (!book.title.trim()) return;
+      const cleanTitle = book.title.trim();
+      if (!cleanTitle) return;
 
       const currentBooks = books.filter((b): b is DnaBookItemData => Boolean(b));
+      const normTitle = cleanTitle.toLowerCase().replace(/\s+/g, " ");
+      const existingAll = [...currentBooks, ...(kryptonite ? [kryptonite] : [])];
+      const isDuplicate = existingAll.some((item) => {
+        if (book.bookId && item.bookId && item.bookId === book.bookId) return true;
+        return item.title.trim().toLowerCase().replace(/\s+/g, " ") === normTitle;
+      });
+
+      if (isDuplicate) {
+        setDuplicateError(`Книга «${cleanTitle}» уже добавлена в билет`);
+        return;
+      }
+
+      setDuplicateError(null);
       if (currentBooks.length < 3) {
-        onChange([...currentBooks, book], kryptonite);
+        onChange([...currentBooks, { ...book, title: cleanTitle }], kryptonite);
       } else if (!kryptonite) {
         // Все три святыни заняты — 4-я книга становится криптонитом
-        onChange(currentBooks, book);
+        onChange(currentBooks, { ...book, title: cleanTitle });
       }
 
       setInputValue("");
@@ -250,6 +265,7 @@ export function BookChipInput({
 
   const handleRemoveFavorite = useCallback(
     (index: number) => {
+      setDuplicateError(null);
       const currentBooks = books.filter((b): b is DnaBookItemData => Boolean(b));
       const next = currentBooks.filter((_, i) => i !== index);
       onChange(next, kryptonite);
@@ -258,6 +274,7 @@ export function BookChipInput({
   );
 
   const handleRemoveKryptonite = useCallback(() => {
+    setDuplicateError(null);
     onChange(books.filter((b): b is DnaBookItemData => Boolean(b)), null);
   }, [books, onChange]);
 
@@ -337,6 +354,7 @@ export function BookChipInput({
               value={inputValue}
               onChange={(e) => {
                 setInputValue(e.target.value);
+                setDuplicateError(null);
                 setIsOpen(e.target.value.trim().length >= 2);
               }}
               onFocus={() => {
@@ -642,6 +660,13 @@ export function BookChipInput({
               </div>
             )}
           </div>
+
+          {/* Сообщение об ошибке дубликата */}
+          {duplicateError && (
+            <p className="text-xs text-rose-400 font-medium" role="alert">
+              {duplicateError}
+            </p>
+          )}
 
           {/* Быстрые популярные книги-подсказки в 1 клик */}
           {availableQuickBooks.length > 0 && (

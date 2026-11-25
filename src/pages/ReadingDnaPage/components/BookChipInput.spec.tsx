@@ -418,4 +418,24 @@ describe("BookChipInput", () => {
       null
     );
   });
+
+  it("запрещает добавление дубликата уже выбранной книги и показывает предупреждение", async () => {
+    const user = userEvent.setup();
+    const handleChange = vi.fn();
+
+    renderWithClient(
+      <BookChipInput
+        books={[{ title: "1984", author: "Джордж Оруэлл" }]}
+        kryptonite={null}
+        onChange={handleChange}
+        theme="light"
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/Название книги/i);
+    await user.type(input, "1984{Enter}");
+
+    expect(handleChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(/уже добавлена/i);
+  });
 });

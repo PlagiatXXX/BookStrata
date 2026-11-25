@@ -47,6 +47,29 @@ describe("getMatchedBooks", () => {
     expect(params.genres).toBe("fantasy,horror");
   });
 
+  it("шлёт scope, complexity и excludeIds при наличии", async () => {
+    mockGet.mockResolvedValue({ books: [] });
+    await getMatchedBooks(
+      { storyFocus: 80, emotionalWeight: 70, pace: 60, darkness: 50, scope: 85, complexity: 90 },
+      3,
+      undefined,
+      undefined,
+      [10, 20],
+    );
+
+    const params = mockGet.mock.calls[0][1] as Record<string, unknown>;
+    expect(params).toEqual({
+      limit: 3,
+      storyFocus: 80,
+      emotionalWeight: 70,
+      pace: 60,
+      darkness: 50,
+      scope: 85,
+      complexity: 90,
+      excludeIds: "10,20",
+    });
+  });
+
   it("не шлёт genres если массив пустой", async () => {
     mockGet.mockResolvedValue({ books: [] });
     await getMatchedBooks({ pace: 50 }, 3, undefined, []);

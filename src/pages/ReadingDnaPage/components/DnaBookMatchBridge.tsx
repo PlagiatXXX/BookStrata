@@ -8,16 +8,19 @@ import type { DnaTheme } from "../ReadingDnaPage";
 
 interface DnaBookMatchBridgeProps {
   axes: DnaAxesData;
+  excludeBookIds?: number[];
   theme: DnaTheme;
   onOpenBukstrazh: () => void;
 }
 
 /**
  * Мост из Reading DNA в каталог книг (Book Match) и AI-библиотекаря (Букстраж).
- * Запрашивает топ-3 книги из каталога с максимальным совпадением по 6 осям билета.
+ * Запрашивает топ-3 книги из каталога с максимальным совпадением по 6 осям билета,
+ * исключая уже указанные священные книги и книгу-криптонит.
  */
 export function DnaBookMatchBridge({
   axes,
+  excludeBookIds,
   theme,
   onOpenBukstrazh,
 }: DnaBookMatchBridgeProps) {
@@ -33,8 +36,8 @@ export function DnaBookMatchBridge({
   };
 
   const { data: matchedBooks, isLoading } = useQuery({
-    queryKey: matchedBooksKey(moodParams, 3),
-    queryFn: () => getMatchedBooks(moodParams, 3),
+    queryKey: matchedBooksKey(moodParams, 3, undefined, undefined, excludeBookIds),
+    queryFn: () => getMatchedBooks(moodParams, 3, undefined, undefined, excludeBookIds),
     staleTime: 5 * 60 * 1000,
   });
 

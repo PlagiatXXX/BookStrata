@@ -317,32 +317,39 @@ export function DnaStepFlow({
           </div>
 
           {/* Навигационные кнопки */}
-          <div className="flex justify-between items-center pt-2">
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={step === 0}
-              className={`px-4 py-2 rounded-lg text-xs font-medium border transition-all active:scale-[0.98] cursor-pointer ${
-                isDark
-                  ? "border-[rgba(201,163,91,0.3)] text-[#efe3cc] hover:bg-[#c9a35b]/10 disabled:opacity-30 disabled:cursor-not-allowed"
-                  : "border-[rgba(59,110,168,0.3)] text-[#2e2a24] hover:bg-[#3b6ea8]/10 disabled:opacity-30 disabled:cursor-not-allowed"
-              }`}
-            >
-              Назад
-            </button>
+          <div className="space-y-1.5 pt-2">
+            <div className="flex justify-between items-center">
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={step === 0}
+                className={`px-4 py-2 rounded-lg text-xs font-medium border transition-all active:scale-[0.98] cursor-pointer ${
+                  isDark
+                    ? "border-[rgba(201,163,91,0.3)] text-[#efe3cc] hover:bg-[#c9a35b]/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                    : "border-[rgba(59,110,168,0.3)] text-[#2e2a24] hover:bg-[#3b6ea8]/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                }`}
+              >
+                Назад
+              </button>
 
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={!isCurrentAxisActive}
-              className={`px-5 py-2 rounded-lg text-xs font-bold text-white transition-all active:scale-[0.98] shadow-md cursor-pointer ${
-                isDark
-                  ? "bg-[#8a2433] hover:bg-[#a32b3d] disabled:opacity-35 disabled:cursor-not-allowed"
-                  : "bg-[#b3412f] hover:bg-[#c94935] disabled:opacity-35 disabled:cursor-not-allowed"
-              }`}
-            >
-              Дальше
-            </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!isCurrentAxisActive}
+                className={`px-5 py-2 rounded-lg text-xs font-bold text-white transition-all active:scale-[0.98] shadow-md cursor-pointer ${
+                  isDark
+                    ? "bg-[#8a2433] hover:bg-[#a32b3d] disabled:opacity-35 disabled:cursor-not-allowed"
+                    : "bg-[#b3412f] hover:bg-[#c94935] disabled:opacity-35 disabled:cursor-not-allowed"
+                }`}
+              >
+                Дальше
+              </button>
+            </div>
+            {!isCurrentAxisActive && (
+              <p className="text-[11px] opacity-65 text-right">
+                Нажмите на шкалу или сдвиньте ползунок (в том числе на 0), чтобы зафиксировать ответ
+              </p>
+            )}
           </div>
         </div>
       )}

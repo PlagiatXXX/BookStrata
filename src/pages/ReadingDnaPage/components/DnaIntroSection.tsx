@@ -149,7 +149,8 @@ export function DnaIntroSection({
             }`}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+              data-decoration-pulse=""
+              className={`w-1.5 h-1.5 rounded-full ${
                 isDark ? "bg-amber-400" : "bg-amber-700"
               }`}
             />
@@ -738,6 +739,42 @@ export function DnaIntroSection({
             </button>
           )}
         </div>
+
+        {/* Полный справочник всех 16 архетипов для быстрого обзора и индексации */}
+        {archetypes.length > 0 && (
+          <details
+            className={`rounded-xl border p-3.5 sm:p-4 text-xs transition-colors ${
+              isDark
+                ? "bg-[#23170e]/50 border-amber-900/35 text-amber-100"
+                : "bg-[#faf6ee] border-[#d8c7a5] text-[#2e2a24]"
+            }`}
+          >
+            <summary className="cursor-pointer font-semibold select-none flex items-center justify-between gap-2">
+              <span>Полный реестр всех {archetypes.length} читательских архетипов по 4 Орденам</span>
+              <span className="opacity-65 text-[11px]">Показать список ▾</span>
+            </summary>
+            <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {archetypes.map((arch) => (
+                <li
+                  key={arch.id}
+                  className={`p-2.5 rounded-lg border ${
+                    isDark
+                      ? "bg-[#1a110c]/60 border-amber-900/30"
+                      : "bg-white/80 border-[#e2d5bc]"
+                  }`}
+                >
+                  <div className="font-bold">
+                    №{arch.number} · {isDark ? arch.names.dark : arch.names.craft}{" "}
+                    <span className="font-normal opacity-70">({arch.caste.name})</span>
+                  </div>
+                  {hasTicket && (
+                    <p className="opacity-80 mt-1 leading-relaxed">{arch.description}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </section>
 
       {/* ─── ДУЭЛЬ И КРИПТОНИТ ─── */}
@@ -970,33 +1007,33 @@ export function DnaIntroSection({
             hasPart: [
               {
                 "@type": "Question",
-                name: "Динамичный сюжет или медитативный слог?",
-                acceptedAnswer: { "@type": "Answer", text: "Выбор между скоростью повествования и глубиной текста." },
+                name: "Что вам нравится в книге: сюжет или рефлексия?",
+                acceptedAnswer: { "@type": "Answer", text: "Калибровка от стремительного сюжета и интриг до глубокого психологизма и философии." },
               },
               {
                 "@type": "Question",
-                name: "Уютная романтика или психологический триллер?",
-                acceptedAnswer: { "@type": "Answer", text: "Выбор между комфортом и напряжением." },
+                name: "Сколько усилий вы готовы вложить в чтение: легко или тяжело?",
+                acceptedAnswer: { "@type": "Answer", text: "Выбор между лёгким отдыхом на вечер и сложным катарсисом." },
               },
               {
                 "@type": "Question",
-                name: "Читать ради сюжета или ради атмосферы?",
-                acceptedAnswer: { "@type": "Answer", text: "Выбор между событиями и настроением." },
+                name: "Как вы предпочитаете читать: быстро или с погружением?",
+                acceptedAnswer: { "@type": "Answer", text: "Предпочитаемый темп: по книге за ночь или медленное смакование текста." },
               },
               {
                 "@type": "Question",
-                name: "Масштабная эпопея или камерная история?",
-                acceptedAnswer: { "@type": "Answer", text: "Выбор между размахом и интимностью." },
+                name: "Какое настроение вам ближе: светло или мрачно?",
+                acceptedAnswer: { "@type": "Answer", text: "Баланс между тёплым уютом и психологическим саспенсом или нуаром." },
               },
               {
                 "@type": "Question",
-                name: "Глубина текста или лёгкость чтения?",
-                acceptedAnswer: { "@type": "Answer", text: "Выбор между сложностью и доступностью." },
+                name: "Какого масштаба история вам нужна: камерное или эпическое?",
+                acceptedAnswer: { "@type": "Answer", text: "Камерная драма в одной комнате или грандиозные миры и эпохи." },
               },
               {
                 "@type": "Question",
-                name: "Читать ради эмоций или ради идей?",
-                acceptedAnswer: { "@type": "Answer", text: "Выбор между чувствами и мыслями." },
+                name: "Любите разгадывать книгу: доступное или многослойное?",
+                acceptedAnswer: { "@type": "Answer", text: "Ясное линейное повествование или модернистские шифры и подтексты." },
               },
             ],
           }),

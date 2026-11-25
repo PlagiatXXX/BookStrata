@@ -19,6 +19,8 @@ export const BLOCKED_ROUTE_PREFIXES = [
   "/forgot-password",
   "/reset-password",
   "/oauth",
+  "/books/",
+  "/blog/",
 ] as const;
 
 /**
@@ -187,7 +189,7 @@ export function useDnaWelcomeModal(
     } catch {
       // Игнорируем ошибки квоты или приватного режима localStorage
     }
-    navigate("/reading-dna");
+    navigate("/reading-dna?tab=test");
   }, [navigate]);
 
   return {

@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import {
   Swords,
@@ -142,17 +143,38 @@ export function DuelSection({
   const [opponent, setOpponent] = useState<ReadingDnaResponseData | null>(
     initialOpponentTicket
   );
+  const [manualMyTicket, setManualMyTicket] = useState<ReadingDnaResponseData | null>(null);
   const [duelResult, setDuelResult] = useState<ReadingDnaDuelResultData | null>(
     initialDuelResult
   );
   const [downloadingFormat, setDownloadingFormat] = useState<"card" | "stories" | null>(null);
-  const [celebrities, setCelebrities] = useState<CelebrityDnaProfileData[]>([]);
   const [loadingCelebritySlug, setLoadingCelebritySlug] = useState<string | null>(null);
   const [activeCelebritySlug, setActiveCelebritySlug] = useState<string | null>(null);
   const duelCardRef = useRef<HTMLDivElement>(null);
   const duelStoryRef = useRef<HTMLDivElement>(null);
   const autoDuelRunRef = useRef<string | null>(null);
   const dismissedOpponentRef = useRef<string | null>(null);
+  const syncedInitialTicketRef = useRef<string | null>(
+    initialOpponentTicket?.ticketNumber.toUpperCase() ?? null
+  );
+
+  const effectiveMyTicket = myTicket || manualMyTicket;
+
+  // Синхронизация асинхронно загруженного оппонента (например, при переходе по ?challenge= или /reading-dna/duel)
+  useEffect(() => {
+    if (!initialOpponentTicket) {
+      syncedInitialTicketRef.current = null;
+      return;
+    }
+    const upper = initialOpponentTicket.ticketNumber.toUpperCase();
+    if (
+      syncedInitialTicketRef.current !== upper &&
+      dismissedOpponentRef.current !== upper
+    ) {
+      syncedInitialTicketRef.current = upper;
+      setOpponent(initialOpponentTicket);
+    }
+  }, [initialOpponentTicket]);
 
   // Сброс блокировок при очистке оппонента из пропсов
   useEffect(() => {
@@ -162,23 +184,14 @@ export function DuelSection({
     }
   }, [opponentTicketNumber, initialOpponentTicket]);
 
-  // Загружаем реальных знаменитостей из БД BookStrata, когда у пользователя есть билет
-  useEffect(() => {
-    if (!myTicket) return;
-    let cancelled = false;
-    getReadingCelebrities()
-      .then((list) => {
-        if (!cancelled && Array.isArray(list)) {
-          setCelebrities(list);
-        }
-      })
-      .catch(() => {
-        // Тихо скрываем блок знаменитостей при сетевой ошибке
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [myTicket]);
+  // Загружаем реальных знаменитостей из БД BookStrata через TanStack Query, когда у пользователя есть билет
+  const { data: celebrities = [] } = useQuery({
+    queryKey: ["readingDna", "celebrities"],
+    queryFn: getReadingCelebrities,
+    enabled: Boolean(myTicket),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
 
   // Копирование собственного номера билета
   const handleCopyMyTicketNumber = useCallback(() => {
@@ -275,10 +288,18 @@ export function DuelSection({
     setErrorMsg(null);
 
     try {
-      const result = await conductReadingDuel({
-        targetTicketNumber: targetCode,
-        challengerTicketNumber: myCode,
-      });
+      const [fetchedMyTicket, fetchedOpponent, result] = await Promise.all([
+        getReadingTicket(myCode),
+        opponent ? Promise.resolve(opponent) : getReadingTicket(targetCode),
+        conductReadingDuel({
+          targetTicketNumber: targetCode,
+          challengerTicketNumber: myCode,
+        }),
+      ]);
+      setManualMyTicket(fetchedMyTicket);
+      if (!opponent && fetchedOpponent) {
+        setOpponent(fetchedOpponent);
+      }
       setDuelResult(result);
     } catch {
       setErrorMsg("Не удалось найти билет с таким номером. Проверьте код билета.");
@@ -305,24 +326,24 @@ export function DuelSection({
     if (!duelResult?.breakdown?.kryptoniteConflict) return null;
     const norm = (s?: string | null) => (s || "").trim().toLowerCase();
 
-    if (opponent?.kryptoniteBook && myTicket?.favoriteBooks?.length) {
+    if (opponent?.kryptoniteBook && effectiveMyTicket?.favoriteBooks?.length) {
       const kTitle = norm(opponent.kryptoniteBook.title);
       const kId = opponent.kryptoniteBook.bookId;
-      const hit = myTicket.favoriteBooks.find(
+      const hit = effectiveMyTicket.favoriteBooks.find(
         (b) => (kId && b.bookId && b.bookId === kId) || (kTitle && norm(b.title) === kTitle)
       );
       if (hit) return hit.title;
     }
-    if (myTicket?.kryptoniteBook && opponent?.favoriteBooks?.length) {
-      const kTitle = norm(myTicket.kryptoniteBook.title);
-      const kId = myTicket.kryptoniteBook.bookId;
+    if (effectiveMyTicket?.kryptoniteBook && opponent?.favoriteBooks?.length) {
+      const kTitle = norm(effectiveMyTicket.kryptoniteBook.title);
+      const kId = effectiveMyTicket.kryptoniteBook.bookId;
       const hit = opponent.favoriteBooks.find(
         (b) => (kId && b.bookId && b.bookId === kId) || (kTitle && norm(b.title) === kTitle)
       );
       if (hit) return hit.title;
     }
-    return opponent?.kryptoniteBook?.title || myTicket?.kryptoniteBook?.title || null;
-  }, [duelResult, myTicket, opponent]);
+    return opponent?.kryptoniteBook?.title || effectiveMyTicket?.kryptoniteBook?.title || null;
+  }, [duelResult, effectiveMyTicket, opponent]);
 
   // Скачивание визуальной карточки результата дуэли (PNG или Stories 9:16)
   const handleDownloadDuel = useCallback(
@@ -346,8 +367,8 @@ export function DuelSection({
           backgroundColor: isDark ? "#1a110c" : "#fbf8f2",
         });
 
-        const myNum = myTicket?.ticketNumber || "me";
-        const oppNum = opponent?.ticketNumber || opponentTicketNumber || "friend";
+        const myNum = effectiveMyTicket?.ticketNumber || "me";
+        const oppNum = activeCelebritySlug || opponent?.ticketNumber || opponentTicketNumber || "friend";
         const link = document.createElement("a");
         link.download =
           format === "stories"
@@ -357,7 +378,7 @@ export function DuelSection({
         link.click();
 
         apiTrackEvent("dna_shared", {
-          ticketNumber: myTicket?.ticketNumber,
+          ticketNumber: effectiveMyTicket?.ticketNumber,
           method: format === "stories" ? "png_duel_stories" : "png_duel_card",
           compatibility: duelResult.compatibility,
         });
@@ -382,27 +403,30 @@ export function DuelSection({
         setDownloadingFormat(null);
       }
     },
-    [duelResult, isDark, myTicket, opponent, opponentTicketNumber]
+    [duelResult, isDark, effectiveMyTicket, activeCelebritySlug, opponent, opponentTicketNumber]
   );
 
   // Копирование результата сравнения с постоянной ссылкой на дуэль
   const handleCopyResult = useCallback(() => {
     if (!duelResult) return;
-    const oppNumber = opponent?.ticketNumber || opponentTicketNumber;
-    const shareUrl =
-      myTicket?.ticketNumber && oppNumber
-        ? `${window.location.origin}/reading-dna?compare=${myTicket.ticketNumber}&with=${oppNumber}`
-        : myTicket?.ticketNumber
-          ? `${window.location.origin}/reading-dna?challenge=${myTicket.ticketNumber}`
+    const oppNumber = !activeCelebritySlug ? (opponent?.ticketNumber || opponentTicketNumber) : null;
+    const shareUrl = activeCelebritySlug
+      ? `${window.location.origin}/celebrities/${activeCelebritySlug}`
+      : effectiveMyTicket?.ticketNumber && oppNumber
+        ? `${window.location.origin}/reading-dna?compare=${effectiveMyTicket.ticketNumber}&with=${oppNumber}`
+        : effectiveMyTicket?.ticketNumber
+          ? `${window.location.origin}/reading-dna?challenge=${effectiveMyTicket.ticketNumber}`
           : window.location.href;
-    const textToShare = `Сравнение читательских вкусов на BookStrata: совместимость ${duelResult.compatibility}%! ${duelResult.verdict}\n${shareUrl}`;
+    const textToShare = activeCelebritySlug
+      ? `Моя совместимость по книжному вкусу с ${opponent?.customName || "кумиром"} на BookStrata — ${duelResult.compatibility}%! ${duelResult.verdict}\n${shareUrl}`
+      : `Сравнение читательских вкусов на BookStrata: совместимость ${duelResult.compatibility}%! ${duelResult.verdict}\n${shareUrl}`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(textToShare);
       setCopiedResult(true);
       setTimeout(() => setCopiedResult(false), 2500);
     }
-  }, [duelResult, myTicket, opponent, opponentTicketNumber]);
+  }, [duelResult, effectiveMyTicket, activeCelebritySlug, opponent, opponentTicketNumber]);
 
   // Точки радара для пользователя и оппонента
   const radarSize = 220;
@@ -411,16 +435,16 @@ export function DuelSection({
   const radius = 70;
 
   const userValues = useMemo(() => {
-    if (!myTicket) return [50, 50, 50, 50, 50, 50];
+    if (!effectiveMyTicket) return [50, 50, 50, 50, 50, 50];
     return [
-      myTicket.axes.storyFocus || 50,
-      myTicket.axes.emotionalWeight || 50,
-      myTicket.axes.pace || 50,
-      myTicket.axes.darkness || 50,
-      myTicket.axes.scope || 50,
-      myTicket.axes.complexity || 50,
+      effectiveMyTicket.axes.storyFocus || 50,
+      effectiveMyTicket.axes.emotionalWeight || 50,
+      effectiveMyTicket.axes.pace || 50,
+      effectiveMyTicket.axes.darkness || 50,
+      effectiveMyTicket.axes.scope || 50,
+      effectiveMyTicket.axes.complexity || 50,
     ];
-  }, [myTicket]);
+  }, [effectiveMyTicket]);
 
   const opponentValues = useMemo(() => {
     if (!opponent) return [50, 50, 50, 50, 50, 50];
@@ -470,7 +494,7 @@ export function DuelSection({
         });
         const celebOpponent: ReadingDnaResponseData = {
           id: res.celebrity.id,
-          ticketNumber: res.celebrity.name,
+          ticketNumber: "",
           customName: res.celebrity.name,
           archetype: res.celebrity.archetype,
           archetypeName: res.celebrity.archetypeName,
@@ -524,6 +548,7 @@ export function DuelSection({
     }
     setDuelResult(null);
     setOpponent(null);
+    setManualMyTicket(null);
     setActiveCelebritySlug(null);
     setInputTicketSuffix("");
     setErrorMsg(null);
@@ -568,7 +593,9 @@ export function DuelSection({
             </button>
 
             <span className="text-[11px] font-mono opacity-60">
-              #{opponent?.ticketNumber || opponentTicketNumber}
+              {activeCelebritySlug
+                ? opponent?.customName
+                : `#${opponent?.ticketNumber || opponentTicketNumber}`}
             </span>
           </div>
 
@@ -620,8 +647,12 @@ export function DuelSection({
           </h2>
 
           <p className="text-xs sm:text-sm opacity-75 max-w-md mx-auto mb-4">
-            Сравнение вкусов между билетом <b>#{myTicket?.ticketNumber || "Вы"}</b> и{" "}
-            <b>#{opponent?.ticketNumber || opponentTicketNumber || "Собеседник"}</b>
+            Сравнение вкусов между билетом <b>#{effectiveMyTicket?.ticketNumber || "Вы"}</b> и{" "}
+            <b>
+              {activeCelebritySlug
+                ? opponent?.customName || "Знаменитостью"
+                : `#${opponent?.ticketNumber || opponentTicketNumber || "Собеседник"}`}
+            </b>
           </p>
 
           {isKryptoniteConflict && (
@@ -729,7 +760,7 @@ export function DuelSection({
                   className="w-3 h-3 rounded-full inline-block"
                   style={{ backgroundColor: isDark ? "#f4d03f" : "#3b6ea8" }}
                 />
-                Вы ({myTicket?.customName || "Ваш билет"})
+                Вы ({effectiveMyTicket?.customName || "Ваш билет"})
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full inline-block bg-[#b5651d]" />
@@ -891,7 +922,7 @@ export function DuelSection({
           <div ref={duelCardRef}>
             <DuelExportCard
               format="card"
-              myTicket={myTicket}
+              myTicket={effectiveMyTicket}
               opponent={opponent}
               opponentTicketNumber={opponentTicketNumber}
               duelResult={duelResult}
@@ -902,7 +933,7 @@ export function DuelSection({
           <div ref={duelStoryRef}>
             <DuelExportCard
               format="stories"
-              myTicket={myTicket}
+              myTicket={effectiveMyTicket}
               opponent={opponent}
               opponentTicketNumber={opponentTicketNumber}
               duelResult={duelResult}
@@ -988,7 +1019,7 @@ export function DuelSection({
                 }`}
               >
                 <Sparkles size={16} />
-                Сравнить вкусы (пройти тест за 60 секунд)
+                Сравнить вкусы (пройти тест за 2 минуты)
                 <ArrowRight size={16} />
               </button>
 

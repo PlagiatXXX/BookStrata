@@ -58,6 +58,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const pendingDnaGuestToken = getDnaGuestToken();
       if (pendingDnaGuestToken) {
         claimReadingDna(pendingDnaGuestToken)
+          .then((res) => {
+            if (res?.dna) {
+              window.dispatchEvent(
+                new CustomEvent("reading-dna-claimed", { detail: res.dna }),
+              );
+            }
+          })
           .catch(() => {
             // Билет мог быть уже привязан или не найден — не блокируем вход
           })

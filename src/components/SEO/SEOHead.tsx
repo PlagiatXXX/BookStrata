@@ -89,6 +89,7 @@ const siteNavigationJsonLd = {
   hasPart: [
     { "@type": "SiteNavigationElement", name: "Главная", url: `${SITE_URL}/` },
     { "@type": "SiteNavigationElement", name: "Рейтинг книг", url: `${SITE_URL}/rankings` },
+    { "@type": "SiteNavigationElement", name: "Книжный ДНК", url: `${SITE_URL}/reading-dna` },
     { "@type": "SiteNavigationElement", name: "Что почитать", url: `${SITE_URL}/what-to-read` },
     { "@type": "SiteNavigationElement", name: "Коллекции", url: `${SITE_URL}/collections` },
     { "@type": "SiteNavigationElement", name: "Новости и сообщество", url: `${SITE_URL}/community` },

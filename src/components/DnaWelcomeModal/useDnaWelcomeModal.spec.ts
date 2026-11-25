@@ -177,7 +177,7 @@ describe("useDnaWelcomeModal and helpers", () => {
       expect(result.current.isOpen).toBe(false);
     });
 
-    it("3. Does NOT open on blocked routes: startsWith('/reading-dna'), startsWith('/admin'), startsWith('/auth'), startsWith('/forgot-password'), startsWith('/reset-password'), startsWith('/oauth')", () => {
+    it("3. Does NOT open on blocked routes: startsWith('/reading-dna'), startsWith('/admin'), startsWith('/auth'), startsWith('/forgot-password'), startsWith('/reset-password'), startsWith('/oauth'), startsWith('/books/'), startsWith('/blog/')", () => {
       const blockedRoutes = [
         "/reading-dna",
         "/reading-dna/test",
@@ -189,6 +189,8 @@ describe("useDnaWelcomeModal and helpers", () => {
         "/reset-password",
         "/oauth",
         "/oauth/callback",
+        "/books/1984",
+        "/blog/kakoy-ya-chitatel",
       ];
 
       for (const route of blockedRoutes) {
@@ -274,7 +276,7 @@ describe("useDnaWelcomeModal and helpers", () => {
       expect(savedTimestamp).toBe(expectedTimestamp);
     });
 
-    it("7. handleAccept closes modal, saves 'true' in bs_dna_welcome_completed, and navigates to '/reading-dna'", () => {
+    it("7. handleAccept closes modal, saves 'true' in bs_dna_welcome_completed, and navigates to '/reading-dna?tab=test'", () => {
       mockPathname = "/";
       const { result } = renderHook(() => useDnaWelcomeModal());
 
@@ -289,7 +291,7 @@ describe("useDnaWelcomeModal and helpers", () => {
 
       expect(result.current.isOpen).toBe(false);
       expect(localStorage.getItem(DNA_WELCOME_COMPLETED_KEY)).toBe("true");
-      expect(mockNavigate).toHaveBeenCalledWith("/reading-dna");
+      expect(mockNavigate).toHaveBeenCalledWith("/reading-dna?tab=test");
     });
 
     it("8. Clears the timer on unmount and prevents state update", () => {
