@@ -4,7 +4,7 @@ import { ArrowLeft, Mail, Copy, Check, ShieldCheck, Clock, FileText } from "luci
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 
-const LEGAL_EMAIL = "legal@bookstrata.ru";
+const LEGAL_EMAIL = "bookstrata@mail.ru";
 
 export default function CopyrightPage() {
   const navigate = useNavigate();
