@@ -34,17 +34,18 @@ describe("AdminStatsService", () => {
   });
 
   describe("getStats", () => {
-    it("должен вернуть статистику со всеми 6 показателями", async () => {
+    it("должен вернуть статистику со всеми показателями", async () => {
       (prisma.user.count as any).mockResolvedValueOnce(100);
       (prisma.user.count as any).mockResolvedValueOnce(25);
       (prisma.newsArticle.count as any).mockResolvedValue(10);
       (prisma.tierList.count as any).mockResolvedValue(500);
       (prisma.user.count as any).mockResolvedValueOnce(12);
       (prisma.feedback.count as any).mockResolvedValue(48);
+      (prisma.user.count as any).mockResolvedValueOnce(4);
 
       const result = await adminStatsService.getStats();
 
-      expect(prisma.user.count).toHaveBeenCalledTimes(3);
+      expect(prisma.user.count).toHaveBeenCalledTimes(4);
       expect(prisma.user.count).toHaveBeenCalledWith();
       expect(prisma.user.count).toHaveBeenCalledWith({
         where: {
@@ -66,15 +67,17 @@ describe("AdminStatsService", () => {
         tierLists: 500,
         violators: 12,
         feedbackCount: 48,
+        onlineCount: 0,
+        onlineUsersCount: 0,
+        onlineGuestsCount: 0,
+        newUsersToday: 4,
       });
     });
 
     it("должен вернуть нули если БД пуста", async () => {
       (prisma.user.count as any).mockResolvedValue(0);
-      (prisma.user.count as any).mockResolvedValue(0);
       (prisma.newsArticle.count as any).mockResolvedValue(0);
       (prisma.tierList.count as any).mockResolvedValue(0);
-      (prisma.user.count as any).mockResolvedValue(0);
       (prisma.feedback.count as any).mockResolvedValue(0);
 
       const result = await adminStatsService.getStats();
@@ -86,10 +89,14 @@ describe("AdminStatsService", () => {
         tierLists: 0,
         violators: 0,
         feedbackCount: 0,
+        onlineCount: 0,
+        onlineUsersCount: 0,
+        onlineGuestsCount: 0,
+        newUsersToday: 0,
       });
     });
 
-    it("должен запрашивать все 6 показателей", async () => {
+    it("должен запрашивать все показатели", async () => {
       (prisma.user.count as any).mockResolvedValue(42);
       (prisma.newsArticle.count as any).mockResolvedValue(7);
       (prisma.tierList.count as any).mockResolvedValue(200);
@@ -97,7 +104,7 @@ describe("AdminStatsService", () => {
 
       const result = await adminStatsService.getStats();
 
-      expect(prisma.user.count).toHaveBeenCalledTimes(3);
+      expect(prisma.user.count).toHaveBeenCalledTimes(4);
       expect(prisma.newsArticle.count).toHaveBeenCalledOnce();
       expect(prisma.tierList.count).toHaveBeenCalledOnce();
       expect(prisma.feedback.count).toHaveBeenCalledOnce();
@@ -108,6 +115,10 @@ describe("AdminStatsService", () => {
         tierLists: 200,
         violators: 42,
         feedbackCount: 15,
+        onlineCount: 0,
+        onlineUsersCount: 0,
+        onlineGuestsCount: 0,
+        newUsersToday: 42,
       });
     });
   });

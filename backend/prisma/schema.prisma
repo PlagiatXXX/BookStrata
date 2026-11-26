@@ -734,22 +734,48 @@ model UserBadge {
 }
 
 model AnalyticsEvent {
-  id        BigInt   @id @default(autoincrement())
-  userId    Int?
-  event     String
-  meta      Json?    @default("{}")
-  url       String?
-  ip        String?
-  userAgent String?
-  createdAt DateTime @default(now()) @map("created_at")
+  id          BigInt   @id @default(autoincrement())
+  userId      Int?
+  anonymousId String?  @map("anonymous_id")
+  sessionId   String?  @map("session_id")
+  event       String
+  meta        Json?    @default("{}")
+  url         String?
+  ip          String?
+  userAgent   String?
+  deviceType  String?  @map("device_type")
+  browser     String?
+  os          String?
+  referrer    String?
+  utmSource   String?  @map("utm_source")
+  utmMedium   String?  @map("utm_medium")
+  utmCampaign String?  @map("utm_campaign")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([event])
   @@index([event, createdAt])
   @@index([userId])
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([anonymousId, createdAt])
   @@index([createdAt])
   @@map("analytics_events")
+}
+
+// Дневные агрегаты аналитики (сохраняются до очистки сырых событий старше 90 дней)
+model AnalyticsDailyStat {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @db.Date
+  metricKey   String   @map("metric_key")
+  dimension   String   @default("")
+  count       Int      @default(0)
+  uniqueCount Int      @default(0) @map("unique_count")
+
+  @@unique([date, metricKey, dimension])
+  @@index([date])
+  @@map("analytics_daily_stats")
 }
 
 model Author {

@@ -131,10 +131,17 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     } catch (error) {
       // Токен невалидный, оставляем request.user = undefined
       // Проверка будет в middleware requireRole
-      logger.error("Невалидный токен", {
-        error,
-        message: error instanceof Error ? error.message : String(error),
-      });
+      const isExpired = error instanceof Error && error.name === "TokenExpiredError";
+      if (isExpired) {
+        logger.debug("Истёкший access-токен", {
+          message: error.message,
+        });
+      } else {
+        logger.error("Невалидный токен", {
+          error,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
   });
 };

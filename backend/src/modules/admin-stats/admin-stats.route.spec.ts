@@ -76,6 +76,10 @@ describe("Admin Stats Routes", () => {
         tierLists: 200,
         violators: 42,
         feedbackCount: 15,
+        onlineCount: 0,
+        onlineUsersCount: 0,
+        onlineGuestsCount: 0,
+        newUsersToday: 42,
       });
     });
 

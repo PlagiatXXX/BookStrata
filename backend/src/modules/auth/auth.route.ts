@@ -17,6 +17,8 @@ import {
 } from "./auth.schema.js";
 import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 import { config } from "../../config/env.js";
+import { redis } from "../../lib/redis.js";
+import { createPresenceService, type PresenceRedisClient } from "../presence/presence.service.js";
 
 export async function authRoutes(fastify: FastifyInstance) {
   // Fastify 5 не принимает пустое JSON тело (FST_ERR_CTP_EMPTY_JSON_BODY).
@@ -248,7 +250,13 @@ export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/auth/logout
   fastify.post("/logout", { preHandler: [authMiddleware] }, async (request, reply) => {
     try {
-      await logout(request.user!.userId);
+      const userId = request.user!.userId;
+      await logout(userId);
+      const presence = createPresenceService(
+        fastify.prisma,
+        redis as unknown as PresenceRedisClient,
+      );
+      await presence.leave({ userId }).catch(() => {});
       reply.clearCookie("refreshToken", { path: "/" });
       return reply.code(200).send(createSuccessResponse({ message: "Logged out successfully" }));
     } catch (error) {

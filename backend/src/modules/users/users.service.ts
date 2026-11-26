@@ -9,6 +9,8 @@ import bcrypt from "bcryptjs";
 import { tierListRepository } from "../../repositories/index.js";
 import { getTitleEntryByXP } from "../achievements/achievements.service.js";
 import { isCategoryId, type CategoryId } from "../books/genreTaxonomy.js";
+import { redis } from "../../lib/redis.js";
+import { createPresenceService, type PresenceRedisClient } from "../presence/presence.service.js";
 
 // Типы для валидации
 export type UpdateAvatarInput = {
@@ -671,49 +673,58 @@ export async function searchUsers(q: string): Promise<UserSearchResult[]> {
  * Получить всех пользователей (только для администраторов)
  */
 export async function getAllUsers() {
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      isPro: true,
-      proExpiresAt: true,
-      isDonor: true,
-      lastActivityAt: true,
-      totalActiveMinutes: true,
-      role: {
-        select: {
-          name: true,
+  const presence = createPresenceService(prisma, redis as unknown as PresenceRedisClient);
+  const [users, presenceMap] = await Promise.all([
+    prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        isPro: true,
+        proExpiresAt: true,
+        isDonor: true,
+        lastActivityAt: true,
+        totalActiveMinutes: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
+        createdAt: true,
+        badges: {
+          select: { id: true, text: true, color: true },
+          orderBy: { createdAt: "asc" as const },
         },
       },
-      createdAt: true,
-      badges: {
-        select: { id: true, text: true, color: true },
-        orderBy: { createdAt: "asc" as const },
+      orderBy: {
+        createdAt: "desc",
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+    }),
+    presence.getUsersPresenceMap(),
+  ]);
 
-  return users.map((user) => ({
-    userId: user.id,
-    email: user.email,
-    username: user.username,
-    isPro: user.isPro,
-    isDonor: user.isDonor,
-    proExpiresAt: user.proExpiresAt?.toISOString() || null,
-    lastActivityAt: user.lastActivityAt?.toISOString() || null,
-    totalActiveMinutes: user.totalActiveMinutes,
-    role: user.role?.name || "user",
-    createdAt: user.createdAt.toISOString(),
-    badges: user.badges.map((b) => ({
-      id: b.id,
-      text: b.text,
-      color: b.color,
-    })),
-  }));
+  return users.map((user) => {
+    const live = presenceMap.get(user.id);
+    return {
+      userId: user.id,
+      email: user.email,
+      username: user.username,
+      isPro: user.isPro,
+      isDonor: user.isDonor,
+      proExpiresAt: user.proExpiresAt?.toISOString() || null,
+      lastActivityAt: user.lastActivityAt?.toISOString() || null,
+      totalActiveMinutes: user.totalActiveMinutes,
+      onlineStatus: live ? live.status : "offline",
+      currentPage: live ? live.page : null,
+      role: user.role?.name || "user",
+      createdAt: user.createdAt.toISOString(),
+      badges: user.badges.map((b) => ({
+        id: b.id,
+        text: b.text,
+        color: b.color,
+      })),
+    };
+  });
 }
 
 export async function getViolators() {
@@ -815,12 +826,8 @@ export async function getViolators() {
 
 // POST /api/users/heartbeat — пульс активности (раз в минуту от фронта)
 export async function heartbeat(userId: number) {
-  await prisma.$executeRaw`
-    UPDATE "User"
-    SET "total_active_minutes" = "total_active_minutes" + 1,
-        "last_activity_at" = NOW()
-    WHERE "id" = ${userId}
-  `;
+  const presence = createPresenceService(prisma, redis as unknown as PresenceRedisClient);
+  await presence.recordActiveMinuteWithThrottle(userId);
   return { ok: true };
 }
 

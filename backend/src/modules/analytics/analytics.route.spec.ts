@@ -30,11 +30,15 @@ vi.mock("../../middleware/requireRole.js", () => ({
 
 const mockAnalyticsService = {
   trackEvent: vi.fn().mockResolvedValue(undefined),
+  trackBatch: vi.fn().mockResolvedValue(undefined),
   getEvents: vi.fn().mockResolvedValue({ events: [], total: 0 }),
   getSummary: vi.fn().mockResolvedValue({ totalEvents: 10 }),
   getMetrics: vi.fn().mockResolvedValue({ dau: 5, mau: 20 }),
   getFunnel: vi.fn().mockResolvedValue({ steps: [] }),
   getRetention: vi.fn().mockResolvedValue({ d1: 10, d7: 5, d30: 2 }),
+  getTimeseries: vi.fn().mockResolvedValue({ days: 30, points: [] }),
+  getInsights: vi.fn().mockResolvedValue({ days: 30, topPages: [] }),
+  getUserJourney: vi.fn().mockResolvedValue({ user: null, events: [] }),
 }
 
 vi.mock("./analytics.service.js", () => ({
@@ -252,6 +256,86 @@ describe("Analytics Routes", () => {
 
       expect(response.statusCode).toBe(200)
       expect(mockAnalyticsService.getRetention).toHaveBeenCalled()
+    })
+
+    it("POST /api/analytics/batch принимает пачку событий и возвращает 202", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/analytics/batch",
+        payload: {
+          events: [
+            { event: "page_view", url: "/books/dune", anonymousId: "a1", sessionId: "s1" },
+            { event: "export_png", meta: { mode: "download" } },
+          ],
+        },
+      })
+
+      expect(response.statusCode).toBe(202)
+      expect(mockAnalyticsService.trackBatch).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ event: "page_view", anonymousId: "a1", sessionId: "s1" }),
+          expect.objectContaining({ event: "export_png", meta: { mode: "download" } }),
+        ]),
+      )
+    })
+
+    it("GET /api/admin/analytics/events отклоняет невалидный cursor (400) и парсит excludeEvents", async () => {
+      const badRes = await app.inject({
+        method: "GET",
+        url: "/api/admin/analytics/events?cursor=abc",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(badRes.statusCode).toBe(400)
+
+      const okRes = await app.inject({
+        method: "GET",
+        url: "/api/admin/analytics/events?excludeEvents=page_view,session_start",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(okRes.statusCode).toBe(200)
+      expect(mockAnalyticsService.getEvents).toHaveBeenCalledWith(
+        expect.objectContaining({
+          excludeEvents: ["page_view", "session_start"],
+        }),
+      )
+    })
+
+    it("GET /api/admin/analytics/timeseries и insights доступны админу", async () => {
+      const tsRes = await app.inject({
+        method: "GET",
+        url: "/api/admin/analytics/timeseries?days=14",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(tsRes.statusCode).toBe(200)
+      expect(mockAnalyticsService.getTimeseries).toHaveBeenCalledWith(14)
+
+      const insRes = await app.inject({
+        method: "GET",
+        url: "/api/admin/analytics/insights?days=7",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(insRes.statusCode).toBe(200)
+      expect(mockAnalyticsService.getInsights).toHaveBeenCalledWith(7)
+    })
+
+    it("GET /api/admin/analytics/user-journey требует userId или anonymousId и отдаёт данные", async () => {
+      const badRes = await app.inject({
+        method: "GET",
+        url: "/api/admin/analytics/user-journey",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(badRes.statusCode).toBe(400)
+
+      const okRes = await app.inject({
+        method: "GET",
+        url: "/api/admin/analytics/user-journey?userId=42",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(okRes.statusCode).toBe(200)
+      expect(mockAnalyticsService.getUserJourney).toHaveBeenCalledWith({
+        userId: 42,
+        anonymousId: undefined,
+      })
     })
   })
 })

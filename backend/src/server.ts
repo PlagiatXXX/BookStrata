@@ -450,6 +450,11 @@ fastify.register(analyticsRoutes, { prefix: "/api/analytics" });
 // Admin: аналитика (дашборд и метрики)
 fastify.register(adminAnalyticsRoutes, { prefix: "/api/admin/analytics" });
 
+// Presence (живой онлайн в Redis)
+import { presenceRoutes, adminPresenceRoutes } from "./modules/presence/presence.route.js";
+fastify.register(presenceRoutes, { prefix: "/api/presence" });
+fastify.register(adminPresenceRoutes, { prefix: "/api/admin/presence" });
+
 // Admin: каталог книг (Фаза 7, seobook.md)
 import { adminBooksRoutes } from "../src/modules/admin-books/admin-books.route.js";
 fastify.register(adminBooksRoutes, { prefix: "/api/admin/books" });
@@ -492,13 +497,13 @@ setInterval(() => {
   });
 }, 60 * 60 * 1000);
 
-// Очистка аналитики старше 90 дней (раз в час)
+// Роллап дневной статистики и очистка сырой аналитики старше 90 дней (раз в 12 часов)
 const analyticsCleanup = createAnalyticsService(prisma);
 setInterval(() => {
   analyticsCleanup.cleanupOldEvents(90).catch((err) => {
     fastify.log.error(err, "Ошибка при очистке старых событий аналитики");
   });
-}, 60 * 60 * 1000);
+}, 12 * 60 * 60 * 1000);
 // Первый запуск — через минуту после старта
 setTimeout(() => {
   analyticsCleanup.cleanupOldEvents(90).catch((err) => {
