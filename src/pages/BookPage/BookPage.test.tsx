@@ -641,7 +641,7 @@ describe("BookPage", () => {
 
     await waitFor(() => {
       expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).toBe(
-        "Великий Гэтсби — Ф. Скотт Фицджеральд: о чём книга, оценка редакции 8,4 из 10 и тир-листы читателей. Роман, ставший символом века джаза.",
+        "Великий Гэтсби — Ф. Скотт Фицджеральд (оценка редакции 8,4/10): Роман, ставший символом века джаза. Тир-листы читателей.",
       );
     });
   });
@@ -1022,16 +1022,16 @@ describe("buildDescriptionSnippet", () => {
   it("без доп. данных — база и описание", () => {
     expect(
       buildDescriptionSnippet({ title: "Дюна", author: "Фрэнк Герберт", description: "Роман о пустынной планете." }),
-    ).toBe("Дюна — Фрэнк Герберт: о чём книга. Роман о пустынной планете.");
+    ).toBe("Дюна — Фрэнк Герберт: Роман о пустынной планете.");
   });
 
   it("без автора — база без тире", () => {
     expect(buildDescriptionSnippet({ title: "Гэтсби", author: null, description: "Роман." })).toBe(
-      "Гэтсби: о чём книга. Роман.",
+      "Гэтсби: Роман.",
     );
   });
 
-  it("добавляет оценку редакции, гид, тир-листы и похожие книги по наличию", () => {
+  it("добавляет оценку редакции в шапку, а гид, тир-листы и похожие — в хвост", () => {
     expect(
       buildDescriptionSnippet({
         title: "Гэтсби",
@@ -1043,7 +1043,7 @@ describe("buildDescriptionSnippet", () => {
         tierListsCount: 3,
       }),
     ).toBe(
-      "Гэтсби — Фицджеральд: о чём книга, оценка редакции 8,4 из 10, гид по чтению, тир-листы читателей и похожие книги. Роман.",
+      "Гэтсби — Фицджеральд (оценка редакции 8,4/10): Роман. Гид по чтению, тир-листы читателей и похожие книги.",
     );
   });
 
@@ -1052,7 +1052,7 @@ describe("buildDescriptionSnippet", () => {
     expect(result).not.toContain("оценка редакции");
   });
 
-  it("добавляет маркер 'мысли читателей' при commentsCount > 0", () => {
+  it("добавляет маркер 'мысли читателей' в хвост при commentsCount > 0", () => {
     const withComments = buildDescriptionSnippet({
       title: "1984",
       author: "Джордж Оруэлл",
@@ -1060,7 +1060,7 @@ describe("buildDescriptionSnippet", () => {
       commentsCount: 5,
     });
     expect(withComments).toBe(
-      "1984 — Джордж Оруэлл: о чём книга и мысли читателей. Роман-антиутопия.",
+      "1984 — Джордж Оруэлл: Роман-антиутопия. Мысли читателей.",
     );
 
     const zeroComments = buildDescriptionSnippet({
@@ -1069,7 +1069,23 @@ describe("buildDescriptionSnippet", () => {
       description: "Роман-антиутопия.",
       commentsCount: 0,
     });
-    expect(zeroComments).not.toContain("мысли читателей");
+    expect(zeroComments).not.toMatch(/мысли читателей/i);
+  });
+
+  it("приоритет shortHook над длинной аннотацией + хвост на оставшееся место", () => {
+    const result = buildDescriptionSnippet({
+      title: "Морфий",
+      author: "Михаил Булгаков",
+      shortHook: "Исповедь молодого земского врача, теряющего волю из-за зависимости.",
+      description: "Длинное издательское описание, которое не должно вытеснить краткий хук.",
+      rating: 9,
+      hasReadingGuide: true,
+      hasSimilarBooks: true,
+    });
+    expect(result.length).toBeLessThanOrEqual(160);
+    expect(result).toBe(
+      "Морфий — Михаил Булгаков (оценка редакции 9/10): Исповедь молодого земского врача, теряющего волю из-за зависимости. Гид по чтению и похожие книги.",
+    );
   });
 
   it("длинное описание обрезает по границе слова, итог ≤ 160 с многоточием", () => {
@@ -1080,18 +1096,19 @@ describe("buildDescriptionSnippet", () => {
     expect(result.endsWith("…конец")).toBe(false);
   });
 
-  it("длинный префикс обрезает описание, но сохраняет начало и укладывается в лимит", () => {
+  it("длинный префикс и все маркеры не вытесняют описание книги", () => {
     const result = buildDescriptionSnippet({
-      title: "Очень длинное название книги про путешествия",
-      author: "Автор",
-      description: "Короткий синопсис про море и горы.",
-      rating: 7,
+      title: "Баллада о падающих драконах",
+      author: "Сара А. Паркер",
+      description: "Продолжение цикла «Когда родилась луна» о драконах, магии, тайнах и древних клятвах героев.",
+      rating: 8.5,
       hasReadingGuide: true,
-      tierListsCount: 1,
+      commentsCount: 4,
+      tierListsCount: 2,
+      hasSimilarBooks: true,
     });
     expect(result.length).toBeLessThanOrEqual(160);
-    expect(result.includes("о чём книга")).toBe(true);
-    expect(result.includes("Короткий")).toBe(true);
+    expect(result).toContain("Продолжение цикла «Когда родилась луна»");
   });
 
   it("префикс длиннее лимита — режется префикс, пустого описания нет", () => {
@@ -1108,9 +1125,9 @@ describe("buildDescriptionSnippet", () => {
     expect(result.startsWith("Очень длинное")).toBe(true);
   });
 
-  it("без описания — fallback-шаблон с базой и призывом", () => {
+  it("без описания и shortHook — fallback-шаблон с базой и призывом", () => {
     expect(buildDescriptionSnippet({ title: "Дюна", author: "Фрэнк Герберт", description: null })).toBe(
-      "Дюна — Фрэнк Герберт: о чём книга. Найди книги в тир-листах и подборках BookStrata.",
+      "Дюна — Фрэнк Герберт: Найди книги в тир-листах и подборках BookStrata.",
     );
   });
 });

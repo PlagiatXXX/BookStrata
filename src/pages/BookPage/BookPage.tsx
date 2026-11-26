@@ -252,6 +252,7 @@ export default function BookPage() {
           title: book.title,
           author: book.author,
           description: book.description,
+          shortHook: book.readingGuide?.short_hook,
           rating: book.rating,
           hasReadingGuide: Boolean(book.readingGuide),
           hasSimilarBooks: similarBooks.length > 0,
