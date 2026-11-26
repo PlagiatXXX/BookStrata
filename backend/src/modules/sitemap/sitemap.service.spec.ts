@@ -141,9 +141,16 @@ describe("generateSitemap — тир-листы", () => {
     mocks.prisma.book.findMany.mockResolvedValue([]);
   });
 
-  it("запрашивает только публичные тир-листы с размещёнными книгами (placements: { some: {} })", async () => {
+  it("запрашивает только публичные тир-листы с книгами в тирах (tierId != null)", async () => {
     mocks.prisma.tierList.findMany.mockResolvedValue([
-      { id: "tl-1", slug: "top-books", updatedAt: new Date("2026-09-01") },
+      {
+        id: "tl-1",
+        slug: "top-books",
+        title: "Лучшие книги года",
+        description: null,
+        updatedAt: new Date("2026-09-01"),
+        placements: Array.from({ length: 5 }, () => ({ tierId: 1, thoughts: null })),
+      },
     ]);
 
     const xml = await generateSitemap();
@@ -152,22 +159,80 @@ describe("generateSitemap — тир-листы", () => {
       expect.objectContaining({
         where: {
           isPublic: true,
-          placements: { some: {} },
+          placements: { some: { tierId: { not: null } } },
         },
       }),
     );
     expect(xml).toContain("<loc>https://bookstrata.ru/tier-lists/top-books</loc>");
   });
 
-  it("исключает из sitemap тир-листы, где менее 5 книг (thin content)", async () => {
+  it("исключает из sitemap тир-листы, где менее 5 расставленных книг (thin content)", async () => {
     mocks.prisma.tierList.findMany.mockResolvedValue([
-      { id: "tl-thin", slug: "one-book", updatedAt: new Date("2026-09-01"), _count: { placements: 1 } },
-      { id: "tl-good", slug: "ten-books", updatedAt: new Date("2026-09-01"), _count: { placements: 10 } },
+      {
+        id: "tl-thin",
+        slug: "one-book",
+        title: "Одна книга в топе",
+        description: null,
+        updatedAt: new Date("2026-09-01"),
+        placements: [{ tierId: 1, thoughts: null }],
+      },
+      {
+        id: "tl-unranked",
+        slug: "only-unranked",
+        title: "Длинный список без рейтинга",
+        description: null,
+        updatedAt: new Date("2026-09-01"),
+        placements: Array.from({ length: 10 }, () => ({ tierId: null, thoughts: null })),
+      },
+      {
+        id: "tl-good",
+        slug: "ten-books",
+        title: "Десять отличных книг",
+        description: null,
+        updatedAt: new Date("2026-09-01"),
+        placements: Array.from({ length: 10 }, () => ({ tierId: 1, thoughts: null })),
+      },
     ]);
 
     const xml = await generateSitemap();
 
     expect(xml).not.toContain("/tier-lists/one-book");
+    expect(xml).not.toContain("/tier-lists/only-unranked");
     expect(xml).toContain("/tier-lists/ten-books");
+  });
+
+  it("исключает из sitemap тир-листы с коротким или шаблонным названием без описания и мыслей", async () => {
+    mocks.prisma.tierList.findMany.mockResolvedValue([
+      {
+        id: "tl-short",
+        slug: "da-fbe89u",
+        title: "да",
+        description: null,
+        updatedAt: new Date("2026-09-01"),
+        placements: Array.from({ length: 8 }, () => ({ tierId: 1, thoughts: null })),
+      },
+      {
+        id: "tl-generic",
+        slug: "tir-list-6q2uc6",
+        title: "Тир-лист",
+        description: null,
+        updatedAt: new Date("2026-09-01"),
+        placements: Array.from({ length: 12 }, () => ({ tierId: 1, thoughts: null })),
+      },
+      {
+        id: "tl-regular",
+        slug: "prochitano-regular",
+        title: "Прочитано",
+        description: null,
+        updatedAt: new Date("2026-09-01"),
+        placements: Array.from({ length: 6 }, () => ({ tierId: 1, thoughts: null })),
+      },
+    ]);
+
+    const xml = await generateSitemap();
+
+    expect(xml).not.toContain("/tier-lists/da-fbe89u");
+    expect(xml).not.toContain("/tier-lists/tir-list-6q2uc6");
+    expect(xml).toContain("/tier-lists/prochitano-regular");
   });
 });

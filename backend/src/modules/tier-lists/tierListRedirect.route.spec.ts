@@ -196,9 +196,15 @@ describe("GET /tier-lists/:slug (публичный серверный роут)
       coverImageUrl: null,
       placements: [
         {
+          tierId: 1,
+          thoughts: null,
           coverImageUrl: null,
           book: { coverImageUrl: "https://bookstrata.ru/img/book-1.webp" },
         },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { coverImageUrl: null } },
       ],
     });
 
@@ -208,5 +214,137 @@ describe("GET /tier-lists/:slug (публичный серверный роут)
     expect(res.body).toContain('meta property="og:image" content="https://bookstrata.ru/img/book-1.webp"');
     expect(res.body).toContain('meta name="twitter:image" content="https://bookstrata.ru/img/book-1.webp"');
     expect(res.body).toContain('meta name="twitter:card" content="summary_large_image"');
+  });
+
+  it("тир-лист с 10 книгами в unranked (0 расставленных по тирам) отдаёт noindex, nofollow", async () => {
+    mocks.fs.existsSync.mockImplementation((file: string) => file.endsWith("spa-index.html"));
+    mocks.fs.readFileSync.mockReturnValue(SPA_SHELL);
+
+    mocks.prisma.tierList.findFirst.mockResolvedValue({
+      id: "tl-unranked-1",
+      slug: "da-fbe89u",
+      title: "Мой длинный список без рейтинга",
+      description: null,
+      isPublic: true,
+      _count: { placements: 10 },
+      placements: Array.from({ length: 10 }, () => ({
+        tierId: null,
+        thoughts: null,
+        coverImageUrl: null,
+        book: { coverImageUrl: null },
+      })),
+      user: { username: "Saiona" },
+    });
+
+    const res = await app.inject({ method: "GET", url: "/tier-lists/da-fbe89u" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('name="robots" content="noindex, nofollow"');
+  });
+
+  it("тир-лист с 4 расставленными книгами (< 5) отдаёт noindex, nofollow", async () => {
+    mocks.fs.existsSync.mockImplementation((file: string) => file.endsWith("spa-index.html"));
+    mocks.fs.readFileSync.mockReturnValue(SPA_SHELL);
+
+    mocks.prisma.tierList.findFirst.mockResolvedValue({
+      id: "tl-small-1",
+      slug: "small-list",
+      title: "Четыре отличные книги",
+      description: null,
+      isPublic: true,
+      _count: { placements: 4 },
+      placements: Array.from({ length: 4 }, () => ({
+        tierId: 1,
+        thoughts: null,
+        coverImageUrl: null,
+        book: { coverImageUrl: null },
+      })),
+      user: { username: "fedor" },
+    });
+
+    const res = await app.inject({ method: "GET", url: "/tier-lists/small-list" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('name="robots" content="noindex, nofollow"');
+  });
+
+  it("тир-лист с коротким/шаблонным названием без описания и мыслей отдаёт noindex, nofollow", async () => {
+    mocks.fs.existsSync.mockImplementation((file: string) => file.endsWith("spa-index.html"));
+    mocks.fs.readFileSync.mockReturnValue(SPA_SHELL);
+
+    mocks.prisma.tierList.findFirst.mockResolvedValue({
+      id: "tl-generic-1",
+      slug: "tir-list-6q2uc6",
+      title: "Тир-лист",
+      description: null,
+      isPublic: true,
+      _count: { placements: 12 },
+      placements: Array.from({ length: 12 }, () => ({
+        tierId: 1,
+        thoughts: null,
+        coverImageUrl: null,
+        book: { coverImageUrl: null },
+      })),
+      user: { username: "kurteevakate" },
+    });
+
+    const res = await app.inject({ method: "GET", url: "/tier-lists/tir-list-6q2uc6" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('name="robots" content="noindex, nofollow"');
+  });
+
+  it("тир-лист с шаблонным названием, но с мыслями автора и >= 5 книгами индексируется", async () => {
+    mocks.fs.existsSync.mockImplementation((file: string) => file.endsWith("spa-index.html"));
+    mocks.fs.readFileSync.mockReturnValue(SPA_SHELL);
+
+    mocks.prisma.tierList.findFirst.mockResolvedValue({
+      id: "tl-thoughts-1",
+      slug: "tir-list-thoughts",
+      title: "Тир-лист",
+      description: null,
+      isPublic: true,
+      _count: { placements: 5 },
+      placements: [
+        { tierId: 1, thoughts: "Очень сильная книга", coverImageUrl: null, book: { coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { coverImageUrl: null } },
+      ],
+      user: { username: "fedor" },
+    });
+
+    const res = await app.inject({ method: "GET", url: "/tier-lists/tir-list-thoughts" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('name="robots" content="index, follow"');
+  });
+
+  it("обрезает домен email у логина автора в SEO-фолбэке", async () => {
+    mocks.fs.existsSync.mockImplementation((file: string) => file.endsWith("spa-index.html"));
+    mocks.fs.readFileSync.mockReturnValue(SPA_SHELL);
+
+    mocks.prisma.tierList.findFirst.mockResolvedValue({
+      id: "tl-email-1",
+      slug: "moj-top-knig",
+      title: "Мой топ фантастики",
+      description: null,
+      isPublic: true,
+      _count: { placements: 6 },
+      placements: Array.from({ length: 6 }, () => ({
+        tierId: 1,
+        thoughts: null,
+        coverImageUrl: null,
+        book: { coverImageUrl: null },
+      })),
+      user: { username: "nazar199947@gmail.com" },
+    });
+
+    const res = await app.inject({ method: "GET", url: "/tier-lists/moj-top-knig" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain("от nazar199947 | BookStrata");
+    expect(res.body).not.toContain("gmail.com");
   });
 });

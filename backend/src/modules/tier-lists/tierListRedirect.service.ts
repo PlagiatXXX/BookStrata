@@ -9,6 +9,7 @@ import { prisma } from "../../lib/prisma.js";
 import { config } from "../../config/env.js";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { sanitizePublicAuthorName } from "./tierListSeoFilter.js";
 
 export const SAFE_SLUG_RE = /^[a-z0-9-]+$/;
 export const UUID_RE =
@@ -23,6 +24,8 @@ export interface TierListMeta {
   coverImageUrl: string | null;
   firstBookCoverUrl?: string | null;
   booksCount: number;
+  placedBooksCount: number;
+  hasThoughts: boolean;
   user: {
     username: string;
   } | null;
@@ -73,9 +76,11 @@ export async function findTierListBySlugOrId(
         },
       },
       placements: {
-        take: 1,
+        where: { tierId: { not: null } },
         orderBy: [{ tier: { rank: "asc" } }, { rank: "asc" }],
         select: {
+          tierId: true,
+          thoughts: true,
           coverImageUrl: true,
           book: {
             select: {
@@ -89,11 +94,20 @@ export async function findTierListBySlugOrId(
 
   if (!tierList) return null;
 
-  const firstPlacement = tierList.placements?.[0];
+  const placements = Array.isArray(tierList.placements)
+    ? tierList.placements.filter((p) => p.tierId !== null)
+    : null;
+
+  const firstPlacement = placements?.[0];
   const firstBookCoverUrl =
     firstPlacement?.coverImageUrl ||
     firstPlacement?.book?.coverImageUrl ||
     null;
+
+  const booksCount = tierList._count?.placements ?? placements?.length ?? 0;
+  const placedBooksCount = placements !== null ? placements.length : booksCount;
+  const hasThoughts =
+    placements?.some((p) => Boolean(p.thoughts?.trim())) ?? false;
 
   return {
     id: tierList.id,
@@ -103,7 +117,9 @@ export async function findTierListBySlugOrId(
     isPublic: tierList.isPublic,
     coverImageUrl: tierList.coverImageUrl,
     firstBookCoverUrl,
-    booksCount: tierList._count?.placements ?? 0,
+    booksCount,
+    placedBooksCount,
+    hasThoughts,
     user: tierList.user,
   };
 }
@@ -197,7 +213,7 @@ export function buildTierListSeoFallbackHtml(tierList: TierListMeta): string {
   const siteUrl = config.CLIENT_URL;
   const canonicalSlug = tierList.slug || tierList.id;
   const pageUrl = `${siteUrl}/tier-lists/${canonicalSlug}`;
-  const author = tierList.user?.username;
+  const author = sanitizePublicAuthorName(tierList.user?.username);
   const count = tierList.booksCount;
 
   let title = tierList.title;

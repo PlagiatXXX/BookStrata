@@ -145,6 +145,7 @@ export class TierListRepository {
         select: {
           id: true,
           title: true,
+          description: true,
           createdAt: true,
           updatedAt: true,
           isPublic: true,
@@ -153,6 +154,10 @@ export class TierListRepository {
           coverImageUrl: true,
           user: { select: { username: true, avatarUrl: true } },
           _count: { select: { placements: true } },
+          placements: {
+            where: { tierId: { not: null } },
+            select: { thoughts: true },
+          },
         },
         orderBy,
         take: options.pageSize,

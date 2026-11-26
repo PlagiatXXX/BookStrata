@@ -18,6 +18,7 @@ import {
   buildPrivateOrEmptyTierListHtml,
   buildTierListSeoFallbackHtml,
 } from "./tierListRedirect.service.js";
+import { isTierListIndexable } from "./tierListSeoFilter.js";
 
 const HTML = "text/html; charset=utf-8";
 
@@ -50,9 +51,17 @@ export async function tierListRedirectRoutes(fastify: FastifyInstance) {
         return reply.redirect(`/tier-lists/${tierList.slug}`, 301);
       }
 
-      // 4) Приватный тир-лист или пустой (0 книг / Thin content)
-      // Владелец в браузере видит SPA, но роботы Google получают noindex, nofollow
-      if (!tierList.isPublic || tierList.booksCount === 0) {
+      // 4) Приватный, пустой или малоценный для SEO тир-лист (Thin content / unranked)
+      // Владелец и гости по прямой ссылке видят SPA, но роботы Google получают noindex, nofollow
+      if (
+        !isTierListIndexable({
+          isPublic: tierList.isPublic,
+          title: tierList.title,
+          description: tierList.description,
+          placedBooksCount: tierList.placedBooksCount,
+          hasThoughts: tierList.hasThoughts,
+        })
+      ) {
         return reply.type(HTML).send(buildPrivateOrEmptyTierListHtml());
       }
 

@@ -8,6 +8,10 @@ import { generateUniqueSlug } from "../../utils/slugify.js";
 import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
 import { getFromCache, setToCache } from "../../lib/cache.js";
 import type { GetTierListsQuery } from "./tierList.schema.js";
+import {
+  isTierListIndexable,
+  sanitizePublicAuthorName,
+} from "./tierListSeoFilter.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface TierListWithCount { _count?: any; [key: string]: unknown }
@@ -108,13 +112,36 @@ export async function getPublicTierLists(
   }
 
   return {
-    data: tierLists.map((tl) => ({
-      ...tl,
-      authorName: tl.user?.username || "Anonymous",
-      authorAvatar: tl.user?.avatarUrl,
-      booksCount: tl._count?.placements ?? 0,
-      _count: undefined,
-    })),
+    data: tierLists.map((tl) => {
+      const placements = (tl as { placements?: { thoughts: string | null }[] })
+        .placements;
+      const booksCount = tl._count?.placements ?? 0;
+      const placedBooksCount = Array.isArray(placements)
+        ? placements.length
+        : booksCount;
+      const hasThoughts = Array.isArray(placements)
+        ? placements.some((p) => Boolean(p.thoughts?.trim()))
+        : false;
+      const description = (tl as { description?: string | null }).description ?? null;
+
+      return {
+        ...tl,
+        authorName: sanitizePublicAuthorName(tl.user?.username) || "Anonymous",
+        authorAvatar: tl.user?.avatarUrl,
+        booksCount,
+        placedBooksCount,
+        hasThoughts,
+        seoIndexable: isTierListIndexable({
+          isPublic: tl.isPublic,
+          title: tl.title,
+          description,
+          placedBooksCount,
+          hasThoughts,
+        }),
+        placements: undefined,
+        _count: undefined,
+      };
+    }),
     meta: {
       totalItems,
       itemCount: tierLists.length,

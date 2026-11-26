@@ -314,8 +314,13 @@ async function addPublicTierListRoutes() {
           log(`  ⚠️  Tier list "${item.title}" has no slug, skipping`);
           continue;
         }
-        if (!item.booksCount || item.booksCount < 5) {
-          log(`  ⏭️  Tier list "${item.title}" has ${item.booksCount ?? 0} books (< 5), skipping prerender (noindex)`);
+        const placedCount = item.placedBooksCount ?? item.booksCount ?? 0;
+        const isSeoEligible =
+          item.seoIndexable !== undefined
+            ? item.seoIndexable
+            : placedCount >= 5;
+        if (!isSeoEligible) {
+          log(`  ⏭️  Tier list "${item.title}" failed SEO filter (placed=${placedCount}), skipping prerender (noindex)`);
           continue;
         }
         const path = `/tier-lists/${slug}`;
