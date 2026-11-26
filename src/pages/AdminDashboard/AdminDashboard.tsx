@@ -187,7 +187,9 @@ export default function AdminDashboard() {
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ['admin', 'stats'],
     queryFn: getAdminDashboardStats,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15_000,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
     retry: 2,
     enabled: user?.role === 'admin',
   })
@@ -251,20 +253,51 @@ export default function AdminDashboard() {
         {/* Quick Stats (только для админа) */}
         {user?.role === 'admin' && (
           <div className="mt-8 p-6 rounded-xl bg-gray-800/50 border border-gray-700">
-            <h2 className="text-lg font-semibold text-white mb-4">
-              Быстрая статистика
-            </h2>
-            <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                Быстрая статистика
+              </h2>
+              <span className="text-xs text-gray-400">Обновляется автоматически</span>
+            </div>
+            <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block size-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <p className="text-gray-400">Онлайн сейчас</p>
+                </div>
+                <p className="text-2xl font-bold text-emerald-400 mt-1">
+                  {isLoading ? '…' : error ? '—' : (stats?.onlineCount ?? 0)}
+                </p>
+                {!isLoading && !error && stats && (
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {stats.onlineUsersCount ?? 0} польз. · {stats.onlineGuestsCount ?? 0} гост.
+                  </p>
+                )}
+              </div>
               <div>
                 <p className="text-gray-400">Всего пользователей</p>
                 <p className="text-2xl font-bold text-white mt-1">
-                    {isLoading ? '…' : error ? '—' : stats?.totalUsers}
+                  {isLoading ? '…' : error ? '—' : stats?.totalUsers}
+                </p>
+                {!isLoading && !error && stats?.newUsersToday !== undefined && (
+                  <p className="text-xs text-emerald-400 mt-0.5">
+                    +{stats.newUsersToday} сегодня
+                  </p>
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <Crown size={14} className="text-amber-400" />
+                  <p className="text-gray-400 text-sm">Pro-подписчики</p>
+                </div>
+                <p className="text-2xl font-bold text-amber-400 mt-1">
+                  {isLoading ? '…' : error ? '—' : (stats?.proUsers ?? 0)}
                 </p>
               </div>
               <div>
                 <p className="text-gray-400">Тир-листов</p>
                 <p className="text-2xl font-bold text-white mt-1">
-                    {isLoading ? '…' : error ? '—' : stats?.tierLists}
+                  {isLoading ? '…' : error ? '—' : stats?.tierLists}
                 </p>
               </div>
               <div>

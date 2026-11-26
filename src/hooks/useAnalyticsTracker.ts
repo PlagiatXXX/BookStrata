@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { apiTrackEvent } from "@/lib/analyticsApi";
+import { getSessionContext } from "@/lib/analyticsIdentity";
 import { pushDataLayerEvent } from "@/lib/gtm";
 import { useAuth } from "@/hooks/useAuthContext";
 
@@ -83,6 +84,11 @@ export function useAnalyticsTracker() {
     }
 
     lastTrackedRef.current = { path: pathname, time: now };
+
+    const sessionCtx = getSessionContext();
+    if (sessionCtx.isNewSession) {
+      apiTrackEvent("session_start", { path: pathname }, pathname);
+    }
 
     // 1. Отправка во внутреннюю БД.
     //    url — pathname (не href): топ книг по просмотрам и фильтры

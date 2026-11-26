@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query"
 import {
   ArrowLeft,
   Search,
@@ -90,6 +90,8 @@ export default function AdminUsersPage() {
   const [activeTab, setActiveTab] = useState<Tab>("users")
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all")
+  const [onlyOnline, setOnlyOnline] = useState(false)
+  const [sortBy, setSortBy] = useState<"createdAt" | "lastActivity" | "activeMinutes">("createdAt")
   const [changingUserId, setChangingUserId] = useState<number | null>(null)
   const [adminPassword, setAdminPassword] = useState("")
   const [confirmTarget, setConfirmTarget] = useState<{
@@ -127,7 +129,9 @@ export default function AdminUsersPage() {
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
     queryKey: ["admin-users"],
     queryFn: () => api.get<AdminUser[]>("/users/admin/all"),
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
+    placeholderData: keepPreviousData,
   })
 
   const { data: violators = [], isLoading: violatorsLoading } = useQuery<ViolatorUser[]>({
@@ -281,14 +285,35 @@ export default function AdminUsersPage() {
 
   const canChangeRole = currentUser?.role === "admin"
 
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch =
-      u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesRole =
-      roleFilter === "all" || u.role === roleFilter
-    return matchesSearch && matchesRole
-  })
+  const onlineCount = users.filter(
+    (u) => u.onlineStatus === "active" || u.onlineStatus === "idle",
+  ).length
+
+  const filteredUsers = users
+    .filter((u) => {
+      const matchesSearch =
+        u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesRole = roleFilter === "all" || u.role === roleFilter
+      const matchesOnline =
+        !onlyOnline || u.onlineStatus === "active" || u.onlineStatus === "idle"
+      return matchesSearch && matchesRole && matchesOnline
+    })
+    .sort((a, b) => {
+      if (sortBy === "activeMinutes") {
+        return (b.totalActiveMinutes ?? 0) - (a.totalActiveMinutes ?? 0)
+      }
+      if (sortBy === "lastActivity") {
+        const rank = (u: AdminUser) =>
+          u.onlineStatus === "active" ? 2 : u.onlineStatus === "idle" ? 1 : 0
+        const rDiff = rank(b) - rank(a)
+        if (rDiff !== 0) return rDiff
+        const tA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0
+        const tB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0
+        return tB - tA
+      }
+      return 0
+    })
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("ru-RU", {
@@ -420,20 +445,45 @@ export default function AdminUsersPage() {
                           : "Пользователи"}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setOnlyOnline((prev) => !prev)}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                    onlyOnline
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                      : "bg-white/5 text-gray-400 border border-transparent hover:bg-white/10"
+                  }`}
+                >
+                  <span className="inline-block size-2 rounded-full bg-emerald-400" />
+                  <span>Онлайн</span>
+                  <span className="text-xs opacity-80">({onlineCount})</span>
+                </button>
               </div>
 
-              <div className="relative w-full sm:w-64">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Поиск по имени или email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/5 border border-gray-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-gray-500"
-                />
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as "createdAt" | "lastActivity" | "activeMinutes")}
+                  aria-label="Сортировка пользователей"
+                  className="bg-white/5 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gray-500 cursor-pointer"
+                >
+                  <option value="createdAt" className="bg-[#1a1a2e]">Сначала новые</option>
+                  <option value="lastActivity" className="bg-[#1a1a2e]">По активности (онлайн)</option>
+                  <option value="activeMinutes" className="bg-[#1a1a2e]">По времени на сайте</option>
+                </select>
+                <div className="relative w-full sm:w-64">
+                  <Search
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Поиск по имени или email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-white/5 border border-gray-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-gray-500"
+                  />
+                </div>
               </div>
             </div>
 
@@ -474,7 +524,7 @@ export default function AdminUsersPage() {
                   {isLoading ? (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={9}
                         className="px-6 py-12 text-center text-sm text-gray-500"
                       >
                         Загрузка...
@@ -483,7 +533,7 @@ export default function AdminUsersPage() {
                   ) : filteredUsers.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={9}
                         className="px-6 py-12 text-center text-sm text-gray-500"
                       >
                         Пользователи не найдены
@@ -587,7 +637,33 @@ export default function AdminUsersPage() {
                           </div>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-400 hidden md:table-cell">
-                          {formatRelativeTime(u.lastActivityAt)}
+                          {u.onlineStatus === "active" ? (
+                            <div className="flex flex-col gap-0.5">
+                              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400">
+                                <span className="inline-block size-2 rounded-full bg-emerald-400 animate-pulse" />
+                                Онлайн
+                              </span>
+                              {u.currentPage && (
+                                <span className="text-[11px] text-gray-500 truncate max-w-36" title={u.currentPage}>
+                                  {u.currentPage}
+                                </span>
+                              )}
+                            </div>
+                          ) : u.onlineStatus === "idle" ? (
+                            <div className="flex flex-col gap-0.5">
+                              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-400">
+                                <span className="inline-block size-2 rounded-full bg-amber-400" />
+                                Отошёл
+                              </span>
+                              {u.currentPage && (
+                                <span className="text-[11px] text-gray-500 truncate max-w-36" title={u.currentPage}>
+                                  {u.currentPage}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            formatRelativeTime(u.lastActivityAt)
+                          )}
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-400 hidden lg:table-cell">
                           {formatTotalMinutes(u.totalActiveMinutes)}

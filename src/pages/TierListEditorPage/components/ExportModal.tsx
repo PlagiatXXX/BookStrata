@@ -3,6 +3,7 @@ import { Modal } from '@/ui/Modal';
 import { Download, Share2, X } from 'lucide-react';
 import Spinner from '@/components/Spinner/Spinner';
 import { YM_GOALS } from '@/lib/ym-goals';
+import { apiTrackEvent } from '@/lib/analyticsApi';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export const ExportModal = ({ isOpen, onClose, onExport }: ExportModalProps) => 
     try {
       await onExport({ mode });
       window.ym?.(109755750, 'reachGoal', YM_GOALS.EXPORT_PNG);
+      apiTrackEvent('export_png', { mode });
       if (mode === 'download') {
         onClose();
       }

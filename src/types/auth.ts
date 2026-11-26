@@ -46,6 +46,8 @@ export interface AdminUser {
   proExpiresAt: string | null;
   lastActivityAt: string | null;
   totalActiveMinutes: number;
+  onlineStatus?: "active" | "idle" | "offline";
+  currentPage?: string | null;
   role: string;
   createdAt: string;
   badges: UserBadge[];

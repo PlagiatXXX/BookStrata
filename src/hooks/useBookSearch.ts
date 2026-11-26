@@ -53,7 +53,7 @@ interface UseBookSearchOptions {
 }
 
 interface UseBookSearchReturn {
-  search: (query: string) => Promise<void>;
+  search: (query: string) => Promise<number>;
   loadMore: () => Promise<void>;
   results: OpenLibraryBook[];
   isLoading: boolean;
@@ -86,8 +86,8 @@ export function useBookSearch(
   };
 
   const search = useCallback(
-    async (query: string) => {
-      if (!query.trim() || query.length < 2) return;
+    async (query: string): Promise<number> => {
+      if (!query.trim() || query.length < 2) return 0;
 
       // Отменяем предыдущий запрос
       abortControllerRef.current?.abort();
@@ -104,7 +104,7 @@ export function useBookSearch(
           setHasMore(false);
           setCurrentQuery(query);
           setStartIndex(cached.length);
-          return;
+          return cached.length;
         }
       }
 
@@ -145,9 +145,10 @@ export function useBookSearch(
         if (cacheEnabled && uniqueBooks.length > 0) {
           setCache(query, uniqueBooks);
         }
+        return uniqueBooks.length;
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
-          return;
+          return 0;
         }
         logger.error(err instanceof Error ? err : new Error(String(err)), {
           action: "bookSearch",

@@ -93,6 +93,48 @@ export interface AdminDashboardStats {
   violators: number
   feedbackCount: number
   supportThreadsCount?: number
+  onlineCount?: number
+  onlineUsersCount?: number
+  onlineGuestsCount?: number
+  newUsersToday?: number
+}
+
+export type PresenceStatus = 'active' | 'idle' | 'offline'
+
+export interface OnlineUserDto {
+  userId: number
+  username: string
+  avatarUrl: string | null
+  role: string
+  page: string
+  deviceType: 'mobile' | 'tablet' | 'desktop'
+  status: 'active' | 'idle'
+  startedAt: string
+  lastPingAt: string
+  sessionMinutes: number
+  isExcluded: boolean
+}
+
+export interface OnlineGuestPageStat {
+  page: string
+  count: number
+}
+
+export interface OnlineGuestDeviceStat {
+  deviceType: 'mobile' | 'tablet' | 'desktop'
+  count: number
+}
+
+export interface OnlinePresenceSnapshotDto {
+  totalOnline: number
+  authCount: number
+  guestCount: number
+  activeCount: number
+  idleCount: number
+  users: OnlineUserDto[]
+  guestsByPage: OnlineGuestPageStat[]
+  guestsByDevice: OnlineGuestDeviceStat[]
+  updatedAt: string
 }
 
 export interface PaginationMeta {

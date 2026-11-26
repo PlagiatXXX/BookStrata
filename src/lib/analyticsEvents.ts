@@ -9,6 +9,7 @@
 export const KNOWN_EVENT_LABELS: Record<string, string> = {
   // Базовые события страниц и жизненного цикла
   page_view: 'Просмотр страницы',
+  session_start: 'Начало визита',
   user_register: 'Регистрация',
   login: 'Вход в систему',
   logout: 'Выход',
@@ -41,6 +42,10 @@ export const KNOWN_EVENT_LABELS: Record<string, string> = {
   review_write: 'Написание ревью',
   battle_participate: 'Участие в битве',
   battle_win: 'Победа в битве',
+  dna_started: 'Книжное ДНК: старт',
+  dna_sealed: 'Книжное ДНК: запечатано',
+  dna_duel: 'Книжное ДНК: дуэль',
+  dna_shared: 'Книжное ДНК: поделились',
 
   // Авторизация и формы
   'auth.login_header': 'Клик «Войти» в шапке',
@@ -52,6 +57,7 @@ export const KNOWN_EVENT_LABELS: Record<string, string> = {
   'auth.submit_register': 'Отправка формы регистрации',
   'auth.forgot_password': 'Переход «Забыли пароль»',
   'auth.logout': 'Выход из профиля',
+  'auth.logout_menu': 'Выход из меню профиля',
   'auth.logout_mobile': 'Выход (мобильное меню)',
 
   // Призывы к действию (CTA — дашборд, лендинг, футер)
@@ -64,6 +70,7 @@ export const KNOWN_EVENT_LABELS: Record<string, string> = {
   'cta.landing.view_all_featured': 'Все популярные (лендинг)',
   'cta.landing.view_all_collections': 'Все коллекции (лендинг)',
   'cta.landing.register_after_try': 'Регистрация после пробы (лендинг)',
+  'cta.landing.try_reading_dna': 'Попробовать Книжное ДНК (лендинг)',
   'cta.landing.create_account_final': 'Создать аккаунт (финал лендинга)',
   'cta.landing.read_history': 'Читать историю (лендинг)',
   'cta.landing.donate': 'Поддержать проект (лендинг)',
@@ -78,14 +85,18 @@ export const KNOWN_EVENT_LABELS: Record<string, string> = {
   'nav.main.shelf': 'Меню: Моя полка',
   'nav.main.donate': 'Меню: Поддержать',
   'nav.main.profile': 'Меню: Профиль',
+  'nav.avatar.profile': 'Меню аватара: Профиль',
+  'nav.avatar.admin': 'Меню аватара: Админ-панель',
   'nav.landing.features': 'Лендинг: Возможности',
   'nav.landing.featured': 'Лендинг: Популярное',
   'nav.landing.rankings': 'Лендинг: Рейтинги',
   'nav.landing.celebrities': 'Лендинг: Знаменитости',
+  'nav.landing.reading_dna': 'Лендинг: Книжное ДНК',
   'nav.landing.authors': 'Лендинг: Авторы',
   'nav.mobile.ratings_books': 'Моб. меню: Книги',
   'nav.mobile.ratings_celebrities': 'Моб. меню: Знаменитости',
   'nav.mobile.ratings_authors': 'Моб. меню: Авторы',
+  'nav.mobile.reading_dna': 'Моб. меню: Книжное ДНК',
 
   // UI
   'ui.landing.menu_toggle': 'Лендинг: Мобильное меню',
@@ -158,9 +169,17 @@ export function getEventBadgeStyle(event: string): string {
   if (event.startsWith('auth.') || event === 'login' || event === 'user_register') {
     return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
   }
-  // Просмотры страниц
-  if (event === 'page_view') {
+  // Просмотры страниц и визиты
+  if (event === 'page_view' || event === 'session_start') {
     return 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+  }
+  // Тир-листы и экспорт
+  if (event.startsWith('tierlist_') || event === 'export_png' || event === 'share_clicked') {
+    return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+  }
+  // Книжное ДНК
+  if (event.startsWith('dna_')) {
+    return 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30'
   }
   // Донаты и поддержка
   if (event.startsWith('donate') || event.includes('donate')) {

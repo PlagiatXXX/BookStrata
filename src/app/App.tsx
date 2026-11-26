@@ -5,6 +5,7 @@ import { Spinner } from "@/components/Spinner";
 import { AchievementNotification } from "@/components/AchievementNotification/AchievementNotification";
 import { useAchievementNotifications } from "@/hooks/useAchievementNotifications";
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
+import { usePresence } from "@/hooks/usePresence";
 import { SessionExpiredOverlay } from "@/components/SessionExpiredOverlay";
 const FeedbackModal = lazy(() => import("@/components/FeedbackModal").then((m) => ({ default: m.FeedbackModal })));
 const SupportWidget = lazy(() => import("@/components/SupportWidget").then((m) => ({ default: m.SupportWidget })));
@@ -18,7 +19,8 @@ import "../styles/sileo-custom.css";
 
 /** Внутренний контент, рендерится внутри AppProviders — хуки зависящие от AuthProvider безопасны */
 function AppShellInner() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { pathname } = useLocation();
   const { newAchievement, clearNotification } = useAchievementNotifications();
   const {
     isOpen: isFeedbackOpen,
@@ -32,6 +34,7 @@ function AppShellInner() {
     handleAccept: handleDnaAccept,
   } = useDnaWelcomeModal({ userId: user?.userId });
   useAnalyticsTracker();
+  usePresence({ pathname, userId: user?.userId, isAuthLoading });
 
   return (
     <>

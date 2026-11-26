@@ -12,7 +12,6 @@ import { apiGetMe } from "@/lib/userApi";
 import { claimReadingDna } from "@/lib/readingDnaApi";
 import { getDnaGuestToken, clearDnaGuestToken } from "@/pages/ReadingDnaPage/utils/dnaStorage";
 import { ApiRequestError } from "@/lib/api-client";
-import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { createLogger } from "@/lib/logger";
 
 export { AuthContext, type AuthContextType };
@@ -24,9 +23,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(() => hasSession());
   const refreshUserDataRef = useRef<(() => void) | null>(null);
-
-  // Heartbeat: отправляет сигнал активности каждые 60с, пока пользователь авторизован
-  useHeartbeat();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapApiUserToAuthUser = (fullUserData: any): User => ({

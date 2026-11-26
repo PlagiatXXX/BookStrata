@@ -333,8 +333,8 @@ export const BookSearchModal = ({
 
     dispatch({ type: "SET_SEARCHED" });
     window.ym?.(109755750, 'reachGoal', YM_GOALS.BOOK_SEARCH)
-    apiTrackEvent('book_search', { query: state.query })
-    await search(state.query);
+    const resultsCount = await search(state.query);
+    apiTrackEvent('book_search', { query: state.query, resultsCount });
   }, [state.query, search, localMode, onRequireAuth, navigate]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

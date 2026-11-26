@@ -303,4 +303,25 @@ describe("AdminUsersPage — жалобы", () => {
       expect(apiAdminGetOrCreateUserThread).toHaveBeenCalled()
     })
   })
+
+  it("показывает live онлайн-статус и фильтрует только онлайн-пользователей", async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      { ...mockUsers[0], onlineStatus: "offline", currentPage: null },
+      { ...mockUsers[1], onlineStatus: "active", currentPage: "/books/dune" },
+      { ...mockUsers[2], onlineStatus: "idle", currentPage: "/dashboard" },
+    ])
+
+    render(<AdminUsersPage />, { wrapper: createWrapper() })
+
+    await waitFor(() => {
+      expect(screen.getByText("/books/dune")).toBeInTheDocument()
+    })
+    expect(screen.getByText("Отошёл")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: /Онлайн \(2\)/ }))
+
+    expect(screen.queryByText("admin@test.com")).not.toBeInTheDocument()
+    expect(screen.getByText("moderator_user")).toBeInTheDocument()
+    expect(screen.getByText("regular_user")).toBeInTheDocument()
+  })
 })

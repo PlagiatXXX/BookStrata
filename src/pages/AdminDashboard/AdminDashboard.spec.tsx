@@ -27,10 +27,15 @@ import { getAdminDashboardStats } from "@/lib/adminStatsApi";
 
 const mockStats = {
   totalUsers: 150,
+  proUsers: 18,
   tierLists: 45,
   activeNews: 12,
   violators: 2,
   feedbackCount: 5,
+  onlineCount: 7,
+  onlineUsersCount: 3,
+  onlineGuestsCount: 4,
+  newUsersToday: 6,
 };
 
 function renderComponent() {
@@ -94,6 +99,9 @@ describe("AdminDashboard", () => {
       expect(screen.getByText("150")).toBeInTheDocument();
       expect(screen.getByText("45")).toBeInTheDocument();
       expect(screen.getByText("12")).toBeInTheDocument();
+      expect(screen.getByText("18")).toBeInTheDocument();
+      expect(screen.getByText("7")).toBeInTheDocument();
+      expect(screen.getByText("+6 сегодня")).toBeInTheDocument();
     });
   });
 
