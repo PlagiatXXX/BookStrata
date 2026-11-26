@@ -85,4 +85,18 @@ describe("buildTierListJsonLd", () => {
     });
     expect(buildTierListJsonLd(data, { title: "Тест" }, "slug")).toBeNull();
   });
+
+  it("обрезает домен email в имени автора в JSON-LD", () => {
+    const data = makeListData();
+    const result = buildTierListJsonLd(
+      data,
+      { title: "Мой топ", user: { username: "nazar199947@gmail.com", id: 7 } },
+      "moj-top",
+    ) as any;
+    expect(result.author).toEqual({
+      "@type": "Person",
+      name: "nazar199947",
+      url: "https://bookstrata.ru/users/7",
+    });
+  });
 });

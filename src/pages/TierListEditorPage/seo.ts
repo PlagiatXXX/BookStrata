@@ -11,23 +11,78 @@ import { pluralize } from "@/utils/pluralize";
 const DEFAULT_TITLE = "Книжный тир-лист";
 const DEFAULT_DESCRIPTION = "Книжный тир-лист на BookStrata — рейтинг книг по уровням";
 
-/** Минимальное количество книг для индексации в поисковых системах (защита от thin content) */
+/** Минимальное количество расставленных в тирах книг для индексации (защита от thin content) */
 export const MIN_BOOKS_FOR_SEO = 5;
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ONLY_DIGITS_RE = /^\d+$/;
+const COPY_SUFFIX_RE = /\((копия|copy)\)\s*$/i;
+const GENERIC_TIER_LIST_TITLES = new Set([
+  "тир-лист",
+  "тир лист",
+  "мой тир-лист",
+  "мой тир лист",
+  "без названия",
+  "книги",
+  "рейтинг",
+  "список",
+  "тест",
+  "test",
+  "untitled",
+  "tier list",
+  "tier-list",
+]);
+
+/**
+ * Если пользователь зарегистрировался с email вместо никнейма,
+ * скрываем доменную часть (@...) в публичных текстах и SEO-тегах.
+ */
+export function sanitizePublicAuthorName(
+  username: string | null | undefined,
+): string | null {
+  const trimmed = username?.trim();
+  if (!trimmed) return null;
+  if (EMAIL_RE.test(trimmed)) {
+    return trimmed.split("@")[0] || trimmed;
+  }
+  return trimmed;
+}
+
+export interface TierListSeoSignals {
+  hasDescription?: boolean;
+  hasThoughts?: boolean;
+}
+
+/**
+ * Определяет, является ли название тир-листа слишком коротким, цифровым,
+ * шаблонным или нетронутой копией без авторской индивидуальности.
+ */
+export function isLowValueTierListTitle(title: string | null | undefined): boolean {
+  const normalized = title?.trim().toLowerCase().replace(/\s+/g, " ") ?? "";
+  if (normalized.length < 5) return true;
+  if (ONLY_DIGITS_RE.test(normalized)) return true;
+  if (COPY_SUFFIX_RE.test(normalized)) return true;
+  return GENERIC_TIER_LIST_TITLES.has(normalized);
+}
 
 /**
  * Определяет, нужно ли ставить noindex на тир-лист.
- * Списки менее 5 книг, черновики или списки без названия закрываются от индексации.
+ * Черновики, приватные списки, списки с менее 5 расставленными в тирах книгами
+ * и неинформативные названия без описания/мыслей закрываются от индексации.
  */
 export function shouldNoindexTierList(
   tierListId: string | undefined,
   isPublic: boolean | undefined,
-  booksCount: number,
+  placedBooksCount: number,
   title?: string | null,
+  signals?: TierListSeoSignals,
 ): boolean {
   if (tierListId === "new") return true;
   if (isPublic === false) return true;
   if (!title || title.trim().length === 0) return true;
-  if (booksCount < MIN_BOOKS_FOR_SEO) return true;
+  if (placedBooksCount < MIN_BOOKS_FOR_SEO) return true;
+  const hasAuthorContent = Boolean(signals?.hasDescription || signals?.hasThoughts);
+  if (!hasAuthorContent && isLowValueTierListTitle(title)) return true;
   return false;
 }
 export function buildTierListSeoTitle(
@@ -36,7 +91,8 @@ export function buildTierListSeoTitle(
   booksCount?: number,
 ): string {
   if (!title) return DEFAULT_TITLE;
-  const authorPart = username ? ` от ${username}` : "";
+  const safeAuthor = sanitizePublicAuthorName(username);
+  const authorPart = safeAuthor ? ` от ${safeAuthor}` : "";
   const booksPart =
     booksCount && booksCount > 0
       ? ` из ${booksCount} ${pluralize(booksCount, "книга", "книги", "книг")}`
@@ -52,7 +108,8 @@ export function buildTierListSeoDescription(
   topBooks?: string[],
 ): string {
   if (!title) return DEFAULT_DESCRIPTION;
-  const authorPart = username ? ` от пользователя ${username}` : "";
+  const safeAuthor = sanitizePublicAuthorName(username);
+  const authorPart = safeAuthor ? ` от пользователя ${safeAuthor}` : "";
   const booksPart =
     booksCount && booksCount > 0
       ? `: ${booksCount} ${pluralize(booksCount, "книга", "книги", "книг")}`

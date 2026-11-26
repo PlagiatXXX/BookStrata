@@ -1,4 +1,5 @@
 import type { TierListData } from "@/types";
+import { sanitizePublicAuthorName } from "./seo";
 
 export interface TierListJsonLdApiData {
   title?: string | null;
@@ -63,7 +64,7 @@ export function buildTierListJsonLd(
     author: apiData?.user
       ? {
           "@type": "Person",
-          name: apiData.user.username || "Anonymous",
+          name: sanitizePublicAuthorName(apiData.user.username) || "Anonymous",
           url: `${SITE_URL}/users/${apiData.user.id}`,
         }
       : undefined,

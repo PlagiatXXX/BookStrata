@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildTierListSeoDescription,
   buildTierListSeoTitle,
+  sanitizePublicAuthorName,
   shouldNoindexTierList,
 } from "./seo";
 
@@ -95,5 +96,63 @@ describe("shouldNoindexTierList", () => {
   it("возвращает false для публичного тир-листа с названием и >= 5 книг", () => {
     expect(shouldNoindexTierList("tl-1", true, 5, "Топ фэнтези")).toBe(false);
     expect(shouldNoindexTierList("tl-1", true, 12, "Топ фэнтези")).toBe(false);
+  });
+});
+
+describe("sanitizePublicAuthorName", () => {
+  it("обрезает домен у логина, похожего на email", () => {
+    expect(sanitizePublicAuthorName("nazar199947@gmail.com")).toBe("nazar199947");
+    expect(sanitizePublicAuthorName(" user.name@mail.ru ")).toBe("user.name");
+  });
+
+  it("не меняет обычные никнеймы", () => {
+    expect(sanitizePublicAuthorName("fedora")).toBe("fedora");
+    expect(sanitizePublicAuthorName("@fedor")).toBe("@fedor");
+  });
+
+  it("возвращает null для пустых значений", () => {
+    expect(sanitizePublicAuthorName(null)).toBeNull();
+    expect(sanitizePublicAuthorName("")).toBeNull();
+  });
+});
+
+describe("buildTierListSeoTitle / Description с email-логином", () => {
+  it("скрывает доменную часть email в title и description", () => {
+    expect(buildTierListSeoTitle("Мой топ", "nazar199947@gmail.com", 10)).toBe(
+      "Мой топ — книжный тир-лист из 10 книг от nazar199947",
+    );
+    expect(buildTierListSeoDescription("Мой топ", "nazar199947@gmail.com", 10)).toBe(
+      "Тир-лист «Мой топ» от пользователя nazar199947: 10 книг — визуальный рейтинг книг, созданный на BookStrata",
+    );
+  });
+});
+
+describe("shouldNoindexTierList — расширенные фильтры качества", () => {
+  it("возвращает true для слишком коротких, цифровых и шаблонных названий без описания и мыслей", () => {
+    expect(shouldNoindexTierList("tl-1", true, 8, "да")).toBe(true);
+    expect(shouldNoindexTierList("tl-1", true, 20, "мяу")).toBe(true);
+    expect(shouldNoindexTierList("tl-1", true, 19, "1747")).toBe(true);
+    expect(shouldNoindexTierList("tl-1", true, 23, "Тир-лист")).toBe(true);
+    expect(shouldNoindexTierList("tl-1", true, 13, "Без названия")).toBe(true);
+    expect(shouldNoindexTierList("tl-1", true, 10, "Моя библиотека (копия)")).toBe(true);
+  });
+
+  it("возвращает false для шаблонного названия, если есть описание или мысли автора", () => {
+    expect(
+      shouldNoindexTierList("tl-1", true, 10, "Тир-лист", { hasDescription: true }),
+    ).toBe(false);
+    expect(
+      shouldNoindexTierList("tl-1", true, 10, "Без названия", { hasThoughts: true }),
+    ).toBe(false);
+  });
+
+  it("возвращает false для обычных названий и >= 5 расставленных книг", () => {
+    expect(
+      shouldNoindexTierList("tl-1", true, 15, "Мой топ детективов"),
+    ).toBe(false);
+    expect(shouldNoindexTierList("tl-1", true, 8, "Прочитано")).toBe(false);
+    expect(shouldNoindexTierList("tl-1", true, 8, "Интересно")).toBe(false);
+    expect(shouldNoindexTierList("tl-1", true, 8, "Мои книги")).toBe(false);
+    expect(shouldNoindexTierList("tl-1", true, 8, "Подборка")).toBe(false);
   });
 });

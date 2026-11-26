@@ -14,6 +14,7 @@ import { EditorLayout } from "./components/EditorLayout";
 import { EditorMainContent } from "./components/EditorMainContent";
 import { EditorScreens } from "./components/EditorScreens";
 import { StreamModeExitButton } from "./components/StreamModeExitButton";
+import { TierListTextBreakdown } from "./components/TierListTextBreakdown";
 import { useTierEditorActions } from "./hooks/useTierEditorActions";
 import { useTierEditorState } from "./hooks/useTierEditorState";
 import { buildTierListJsonLd } from "./buildTierListJsonLd";
@@ -24,7 +25,12 @@ import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
 import { resolveDemoInitialData } from "./_initialData";
-import { buildTierListSeoDescription, buildTierListSeoTitle, shouldNoindexTierList } from "./seo";
+import {
+  buildTierListSeoDescription,
+  buildTierListSeoTitle,
+  sanitizePublicAuthorName,
+  shouldNoindexTierList,
+} from "./seo";
 import { getBookViewAction } from "./bookClick";
 import { pushDataLayerEvent } from "@/lib/gtm";
 import { useBookshelf } from "@/hooks/useBookshelf";
@@ -882,6 +888,16 @@ const TierListEditorContent = () => {
   );
 
   const jsonLd = isPublic && apiData ? buildTierListJsonLd(listData, apiData, pageUrl) : null;
+  const placedBooksCount = listData.tierOrder.reduce(
+    (sum, id) => sum + (listData.tiers[id]?.bookIds.length ?? 0),
+    0,
+  );
+  const hasDescription = Boolean(apiData?.description?.trim());
+  const hasThoughts = Object.values(listData.books).some((b) =>
+    Boolean(b.thoughts?.trim()),
+  );
+  const safeAuthorUsername =
+    sanitizePublicAuthorName(apiData?.user?.username) ?? undefined;
 
   return (
     <>
@@ -922,14 +938,15 @@ const TierListEditorContent = () => {
           }
           publishedTime={apiData?.createdAt ?? apiData?.updatedAt}
           dateModified={apiData?.updatedAt}
-          author={apiData?.user?.username}
+          author={safeAuthorUsername}
           type="article"
           noindex={
             shouldNoindexTierList(
               tierListId,
               isPublic,
-              Object.keys(listData.books).length,
+              placedBooksCount,
               apiData?.title,
+              { hasDescription, hasThoughts },
             )
           }
           breadcrumbs={[
@@ -989,7 +1006,7 @@ const TierListEditorContent = () => {
               <TasteMatchBanner
                 apiData={apiData}
                 isReadOnly={isReadOnly}
-                authorUsername={apiData?.user?.username}
+                authorUsername={safeAuthorUsername}
               />
 
               {/* Приветственный промпт AI — один раз при добавлении 3+ книг */}
@@ -1052,6 +1069,15 @@ const TierListEditorContent = () => {
 
           {!isStreamMode && effectiveTierListId && effectiveTierListId !== "new" && (
             <SimilarTierListsCarousel tierListId={effectiveTierListId} initialSimilar={apiData?.similar} />
+          )}
+
+          {isReadOnly && !isStreamMode && (
+            <TierListTextBreakdown
+              title={apiData?.title || listData.title}
+              authorName={apiData?.user?.username}
+              listData={listData}
+              onViewBook={handleViewBook}
+            />
           )}
         </>
 

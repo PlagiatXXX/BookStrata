@@ -6,6 +6,7 @@ import { sileo } from "sileo";
 import { LikeButton } from "@/components/LikeButton";
 import { TierListCover } from "@/components/DashboardHeroSection/components/TierListCover";
 import { PrivateBadge } from "@/components/PrivateBadge";
+import { sanitizePublicAuthorName } from "../seo";
 
 export interface EditorHeaderProps {
   title: string;
@@ -90,6 +91,10 @@ export const EditorHeader = ({
     }
   };
 
+  const safeAuthorUsername = author
+    ? sanitizePublicAuthorName(author.username) || author.username
+    : null;
+
   return (
     <div className={`${isReadOnly ? "mb-3" : "mb-6 pb-4"}`}>
       {isReadOnly ? (
@@ -103,7 +108,7 @@ export const EditorHeader = ({
                 onClick={() => navigate(`/users/${author.id}`)}
                 className="text-sm text-(--theme-accent-primary) hover:text-(--theme-text) transition-colors cursor-pointer"
               >
-                автор: {author.username}
+                автор: {safeAuthorUsername}
               </button>
             )}
           </div>
@@ -133,7 +138,7 @@ export const EditorHeader = ({
                   onClick={() => navigate(`/users/${author.id}`)}
                   className="text-sm text-(--theme-accent-primary) hover:text-(--theme-text) transition-colors cursor-pointer"
                 >
-                  автор: {author.username}
+                  автор: {safeAuthorUsername}
                 </button>
               )}
             </div>

@@ -796,6 +796,25 @@ describe("BookPage", () => {
 
     expect(ld).not.toHaveProperty("comment");
   });
+
+  it("строит canonical строго по актуальному book.slug, даже если в маршруте старый slug", async () => {
+    mockedUseParams.mockReturnValue({ slug: "staryj-slug-knigi" });
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+
+    renderPage(["/books/staryj-slug-knigi"]);
+
+    await waitFor(() => {
+      const canonical = document.head.querySelector('link[rel="canonical"]');
+      expect(canonical?.getAttribute("href")).toBe(
+        "https://bookstrata.ru/books/velikij-getssbi",
+      );
+    });
+  });
 });
 
 describe("BookPage: блок «Где читать»", () => {

@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { useRef } from "react";
 import { getSimilarTierLists } from "@/lib/tierListApi";
 import { buildSimilarTierListsJsonLd } from "./seo";
+import { sanitizePublicAuthorName } from "@/pages/TierListEditorPage/seo";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { RetryableImage } from "@/ui/RetryableImage";
 import { booksCountText } from "@/lib/plural";
@@ -99,7 +100,7 @@ export function SimilarTierListsCarousel({
                     {tl.title}
                   </h3>
                   <p className="text-xs text-(--theme-text-muted) mt-1 line-clamp-1">
-                    {tl.authorName || tl.user?.username || "Неизвестный автор"}
+                    {sanitizePublicAuthorName(tl.authorName || tl.user?.username) || "Неизвестный автор"}
                   </p>
                   <div className="flex items-center gap-3 mt-2 text-xs text-(--theme-text-muted)">
                     <span className="flex items-center gap-1">

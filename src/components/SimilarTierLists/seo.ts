@@ -4,6 +4,7 @@
 // из файлов компонентов.
 
 import type { TierListShort } from "@/lib/tierListApi";
+import { sanitizePublicAuthorName } from "@/pages/TierListEditorPage/seo";
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
 
@@ -18,23 +19,28 @@ export function buildSimilarTierListsJsonLd(
     name: "Похожие тир-листы",
     itemListOrder: "https://schema.org/ItemListUnordered",
     numberOfItems: items.length,
-    itemListElement: items.map((tl, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "Article",
-        name: tl.title,
-        url: `${SITE_URL}/tier-lists/${tl.slug || tl.id}`,
-        ...(tl.coverImageUrl ? { image: tl.coverImageUrl } : {}),
-        ...(tl.authorName || tl.user?.username
-          ? {
-              author: {
-                "@type": "Person",
-                name: tl.authorName || tl.user?.username,
-              },
-            }
-          : {}),
-      },
-    })),
+    itemListElement: items.map((tl, index) => {
+      const safeAuthor = sanitizePublicAuthorName(
+        tl.authorName || tl.user?.username,
+      );
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "Article",
+          name: tl.title,
+          url: `${SITE_URL}/tier-lists/${tl.slug || tl.id}`,
+          ...(tl.coverImageUrl ? { image: tl.coverImageUrl } : {}),
+          ...(safeAuthor
+            ? {
+                author: {
+                  "@type": "Person",
+                  name: safeAuthor,
+                },
+              }
+            : {}),
+        },
+      };
+    }),
   };
 }

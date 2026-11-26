@@ -148,12 +148,14 @@ export default function BookPage() {
       ? "/rankings"
       : null;
 
+  const canonicalSlug = book.slug || slug;
+
   const breadcrumbs = fromTierList
     ? [
         // Путь навигации «Тир-лист → Книга» — иерархия каталога тут не причём
         { name: "Главная", url: "/" },
         { name: fromTierList.title, url: `/tier-lists/${fromTierList.id}` },
-        { name: book.title, url: `/books/${slug}` },
+        { name: book.title, url: `/books/${canonicalSlug}` },
       ]
     : [
         // Иерархия каталога: Главная → Рейтинги → Жанр → Книга
@@ -166,12 +168,12 @@ export default function BookPage() {
           : book.genre
             ? [{ name: book.genre, url: "/rankings" }]
             : []),
-        { name: book.title, url: `/books/${slug}` },
+        { name: book.title, url: `/books/${canonicalSlug}` },
       ];
 
   const bookJsonLd = buildBookJsonLd({
     ...book,
-    url: `${SITE_URL}/books/${slug}`,
+    url: `${SITE_URL}/books/${canonicalSlug}`,
     comments: comments.items,
   });
 
@@ -272,7 +274,7 @@ export default function BookPage() {
             ? book.coverImageUrl
             : undefined
         }
-        url={`/books/${slug}`}
+        url={`/books/${canonicalSlug}`}
         type="article"
         hideSiteName
         breadcrumbs={breadcrumbs.map((b) => ({ name: b.name, url: b.url }))}
