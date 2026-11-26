@@ -336,15 +336,23 @@ export class TierListRepository {
             items: { orderBy: { rank: "asc" }, include: { book: true } },
           },
         },
+        // Берём ВСЕ placements тир-листа, а не только tierId = null:
+        // placement с tierId, указывающим на удалённый/чужой tier (осиротевший
+        // после удаления тира или рассинхрона), иначе теряется при чтении.
         placements: {
-          where: { tierId: null },
           include: { book: true },
           orderBy: { rank: "asc" },
         },
       },
     });
 
-    const { placements: unrankedBooks, ...rest } = tierList;
+    const tierIds = new Set(tierList.tiers.map((t) => t.id));
+    const unrankedBooks = (tierList.placements ?? []).filter(
+      (p) => p.tierId === null || !tierIds.has(p.tierId),
+    );
+
+    const { placements: _allPlacements, ...rest } = tierList;
+    void _allPlacements;
     return { ...rest, unrankedBooks };
   }
 

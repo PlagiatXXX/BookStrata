@@ -390,7 +390,6 @@ describe("tierList.service", () => {
             },
           },
           placements: {
-            where: { tierId: null },
             include: { book: true },
             orderBy: { rank: "asc" },
           },
