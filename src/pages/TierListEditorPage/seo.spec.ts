@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildTierListSeoDescription,
   buildTierListSeoTitle,
+  isMeaningfulBookForSeo,
+  isTechnicalBookTitle,
   sanitizePublicAuthorName,
   shouldNoindexTierList,
 } from "./seo";
@@ -154,5 +156,44 @@ describe("shouldNoindexTierList — расширенные фильтры кач
     expect(shouldNoindexTierList("tl-1", true, 8, "Интересно")).toBe(false);
     expect(shouldNoindexTierList("tl-1", true, 8, "Мои книги")).toBe(false);
     expect(shouldNoindexTierList("tl-1", true, 8, "Подборка")).toBe(false);
+  });
+});
+
+describe("isTechnicalBookTitle и isMeaningfulBookForSeo", () => {
+  it("распознаёт md5/hex-хэши, UUID и имена файлов изображений", () => {
+    expect(isTechnicalBookTitle("f7b21e2b0a472bece4e63b3e5d4fcf8e")).toBe(true);
+    expect(isTechnicalBookTitle("14055da3182a4fde2f91a5a7053f317d")).toBe(true);
+    expect(isTechnicalBookTitle("image (347)")).toBe(true);
+    expect(isTechnicalBookTitle("IMG_20261126_123456.jpg")).toBe(true);
+    expect(isTechnicalBookTitle("Screenshot_2026-01-01.png")).toBe(true);
+    expect(isTechnicalBookTitle("photo_12.webp")).toBe(true);
+    expect(isTechnicalBookTitle("12345678")).toBe(true);
+  });
+
+  it("не блокирует настоящие короткие или числовые названия книг", () => {
+    expect(isTechnicalBookTitle("1984")).toBe(false);
+    expect(isTechnicalBookTitle("2666")).toBe(false);
+    expect(isTechnicalBookTitle("451 градус по Фаренгейту")).toBe(false);
+    expect(isTechnicalBookTitle("Дюна")).toBe(false);
+    expect(isTechnicalBookTitle("Мы")).toBe(false);
+    expect(isTechnicalBookTitle("Идиот")).toBe(false);
+  });
+
+  it("считает книгу значимой, если у неё есть автор, мысли или статус published", () => {
+    expect(
+      isMeaningfulBookForSeo({ title: "image (347)", author: "Неизвестен" }),
+    ).toBe(false);
+    expect(
+      isMeaningfulBookForSeo({ title: "f7b21e2b0a472bece4e63b3e5d4fcf8e" }),
+    ).toBe(false);
+    expect(
+      isMeaningfulBookForSeo({ title: "image (347)", author: "Джордж Оруэлл" }),
+    ).toBe(true);
+    expect(
+      isMeaningfulBookForSeo({ title: "image (347)", thoughts: "Классная книга" }),
+    ).toBe(true);
+    expect(
+      isMeaningfulBookForSeo({ title: "Дюна" }),
+    ).toBe(true);
   });
 });

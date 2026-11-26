@@ -9,7 +9,10 @@ import { prisma } from "../../lib/prisma.js";
 import { config } from "../../config/env.js";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { sanitizePublicAuthorName } from "./tierListSeoFilter.js";
+import {
+  countMeaningfulPlacedBooks,
+  sanitizePublicAuthorName,
+} from "./tierListSeoFilter.js";
 
 export const SAFE_SLUG_RE = /^[a-z0-9-]+$/;
 export const UUID_RE =
@@ -85,6 +88,10 @@ export async function findTierListBySlugOrId(
           book: {
             select: {
               coverImageUrl: true,
+              title: true,
+              author: true,
+              slug: true,
+              status: true,
             },
           },
         },
@@ -105,7 +112,8 @@ export async function findTierListBySlugOrId(
     null;
 
   const booksCount = tierList._count?.placements ?? placements?.length ?? 0;
-  const placedBooksCount = placements !== null ? placements.length : booksCount;
+  const placedBooksCount =
+    placements !== null ? countMeaningfulPlacedBooks(placements) : booksCount;
   const hasThoughts =
     placements?.some((p) => Boolean(p.thoughts?.trim())) ?? false;
 

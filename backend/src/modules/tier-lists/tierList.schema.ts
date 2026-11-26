@@ -293,6 +293,8 @@ export const getPublicTierListsSchema = {
               authorName: { type: 'string', description: 'Author username' },
               authorAvatar: { type: 'string', description: 'Author avatar URL' },
               booksCount: { type: 'number', description: 'Number of books' },
+              placedBooksCount: { type: 'number', description: 'Number of books placed in tiers' },
+              seoIndexable: { type: 'boolean', description: 'Whether tier list is eligible for indexing' },
               likesCount: { type: 'number', description: 'Number of likes' },
             },
           },

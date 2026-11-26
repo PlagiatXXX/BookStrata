@@ -9,8 +9,10 @@ import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
 import { getFromCache, setToCache } from "../../lib/cache.js";
 import type { GetTierListsQuery } from "./tierList.schema.js";
 import {
+  countMeaningfulPlacedBooks,
   isTierListIndexable,
   sanitizePublicAuthorName,
+  type PlacedBookSeoItem,
 } from "./tierListSeoFilter.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,11 +115,10 @@ export async function getPublicTierLists(
 
   return {
     data: tierLists.map((tl) => {
-      const placements = (tl as { placements?: { thoughts: string | null }[] })
-        .placements;
+      const placements = (tl as { placements?: PlacedBookSeoItem[] }).placements;
       const booksCount = tl._count?.placements ?? 0;
       const placedBooksCount = Array.isArray(placements)
-        ? placements.length
+        ? countMeaningfulPlacedBooks(placements)
         : booksCount;
       const hasThoughts = Array.isArray(placements)
         ? placements.some((p) => Boolean(p.thoughts?.trim()))

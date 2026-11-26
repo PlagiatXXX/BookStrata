@@ -1,5 +1,5 @@
 import type { TierListData } from "@/types";
-import { sanitizePublicAuthorName } from "./seo";
+import { isMeaningfulBookForSeo, sanitizePublicAuthorName } from "./seo";
 
 export interface TierListJsonLdApiData {
   title?: string | null;
@@ -27,7 +27,7 @@ export function buildTierListJsonLd(
       return tier.bookIds
         .map((bookId) => {
           const book = listData.books[bookId];
-          if (!book) return null;
+          if (!book || !isMeaningfulBookForSeo(book)) return null;
           return {
             "@type": "ListItem",
             position: 0, // будет перезаписан сквозной нумерацией ниже

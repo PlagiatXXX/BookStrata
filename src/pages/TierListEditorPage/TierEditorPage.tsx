@@ -28,6 +28,7 @@ import { resolveDemoInitialData } from "./_initialData";
 import {
   buildTierListSeoDescription,
   buildTierListSeoTitle,
+  isMeaningfulBookForSeo,
   sanitizePublicAuthorName,
   shouldNoindexTierList,
 } from "./seo";
@@ -888,10 +889,14 @@ const TierListEditorContent = () => {
   );
 
   const jsonLd = isPublic && apiData ? buildTierListJsonLd(listData, apiData, pageUrl) : null;
-  const placedBooksCount = listData.tierOrder.reduce(
-    (sum, id) => sum + (listData.tiers[id]?.bookIds.length ?? 0),
-    0,
-  );
+  const placedBooksCount = listData.tierOrder.reduce((sum, id) => {
+    const bookIds = listData.tiers[id]?.bookIds ?? [];
+    const meaningfulCount = bookIds.filter((bookId) => {
+      const book = listData.books[bookId];
+      return Boolean(book && isMeaningfulBookForSeo(book));
+    }).length;
+    return sum + meaningfulCount;
+  }, 0);
   const hasDescription = Boolean(apiData?.description?.trim());
   const hasThoughts = Object.values(listData.books).some((b) =>
     Boolean(b.thoughts?.trim()),
@@ -923,9 +928,13 @@ const TierListEditorContent = () => {
                     ? firstTier.bookIds
                     : Object.keys(listData.books);
                 return ids
+                  .map((id) => listData.books[id])
+                  .filter(
+                    (b): b is Book =>
+                      Boolean(b && isMeaningfulBookForSeo(b)),
+                  )
                   .slice(0, 3)
-                  .map((id) => listData.books[id]?.title)
-                  .filter((t): t is string => !!t);
+                  .map((b) => b.title);
               })(),
             )
           }

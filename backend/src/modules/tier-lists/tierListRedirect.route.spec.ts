@@ -347,4 +347,32 @@ describe("GET /tier-lists/:slug (публичный серверный роут)
     expect(res.body).toContain("от nazar199947 | BookStrata");
     expect(res.body).not.toContain("gmail.com");
   });
+
+  it("тир-лист из одних технических названий книг (хэши, image (347)) отдаёт noindex, nofollow", async () => {
+    mocks.fs.existsSync.mockImplementation((file: string) => file.endsWith("spa-index.html"));
+    mocks.fs.readFileSync.mockReturnValue(SPA_SHELL);
+
+    mocks.prisma.tierList.findFirst.mockResolvedValue({
+      id: "tl-hashes-1",
+      slug: "knigi-kotorye-my-zasluzhili-etjrcn",
+      title: "Книги которые мы заслужили",
+      description: null,
+      isPublic: true,
+      _count: { placements: 6 },
+      placements: [
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { title: "f7b21e2b0a472bece4e63b3e5d4fcf8e", author: null, slug: null, status: "draft", coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { title: "image (347)", author: null, slug: null, status: "draft", coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { title: "14055da3182a4fde2f91a5a7053f317d", author: null, slug: null, status: "draft", coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { title: "IMG_1234", author: null, slug: null, status: "draft", coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { title: "image (340)", author: null, slug: null, status: "draft", coverImageUrl: null } },
+        { tierId: 1, thoughts: null, coverImageUrl: null, book: { title: "66f6bf32e51e6269f2800ea0cc202e41", author: null, slug: null, status: "draft", coverImageUrl: null } },
+      ],
+      user: { username: "Пустой странник" },
+    });
+
+    const res = await app.inject({ method: "GET", url: "/tier-lists/knigi-kotorye-my-zasluzhili-etjrcn" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('name="robots" content="noindex, nofollow"');
+  });
 });

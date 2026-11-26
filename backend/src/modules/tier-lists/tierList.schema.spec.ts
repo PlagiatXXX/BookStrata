@@ -398,4 +398,49 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
       expect(body.meta.totalItems).toBe(1);
     });
   });
+
+  describe("GET /api/tier-lists/public — публичные тир-листы для пререндера", () => {
+    it("пропускает placedBooksCount и seoIndexable через схему сериализации", async () => {
+      vi.mocked(service.getPublicTierLists).mockResolvedValue({
+        data: [
+          {
+            id: "l-pub-1",
+            title: "Мой топ детективов",
+            slug: "moj-top-detektivov",
+            isPublic: true,
+            authorName: "fedor",
+            booksCount: 15,
+            placedBooksCount: 15,
+            seoIndexable: true,
+            likesCount: 3,
+          },
+          {
+            id: "l-pub-2",
+            title: "да",
+            slug: "da-fbe89u",
+            isPublic: true,
+            authorName: "Saiona",
+            booksCount: 8,
+            placedBooksCount: 0,
+            seoIndexable: false,
+            likesCount: 0,
+          },
+        ],
+        meta: { totalItems: 2, itemCount: 2, itemsPerPage: 100, totalPages: 1, currentPage: 1 },
+        links: {},
+      } as any);
+
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/public",
+      });
+      expect(res.statusCode).toBe(200);
+
+      const body = res.json();
+      expect(body.data[0].placedBooksCount).toBe(15);
+      expect(body.data[0].seoIndexable).toBe(true);
+      expect(body.data[1].placedBooksCount).toBe(0);
+      expect(body.data[1].seoIndexable).toBe(false);
+    });
+  });
 });

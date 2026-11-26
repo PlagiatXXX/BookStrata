@@ -156,7 +156,17 @@ export class TierListRepository {
           _count: { select: { placements: true } },
           placements: {
             where: { tierId: { not: null } },
-            select: { thoughts: true },
+            select: {
+              thoughts: true,
+              book: {
+                select: {
+                  title: true,
+                  author: true,
+                  slug: true,
+                  status: true,
+                },
+              },
+            },
           },
         },
         orderBy,

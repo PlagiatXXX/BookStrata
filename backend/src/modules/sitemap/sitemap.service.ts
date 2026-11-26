@@ -1,7 +1,11 @@
 import { prisma } from "../../lib/prisma.js";
 
 import { config } from "../../config/env.js";
-import { isTierListIndexable } from "../tier-lists/tierListSeoFilter.js";
+import {
+  countMeaningfulPlacedBooks,
+  isTierListIndexable,
+  type PlacedBookSeoItem,
+} from "../tier-lists/tierListSeoFilter.js";
 
 const SITE_URL = config.CLIENT_URL;
 
@@ -60,6 +64,14 @@ export async function generateSitemap(): Promise<string> {
           select: {
             tierId: true,
             thoughts: true,
+            book: {
+              select: {
+                title: true,
+                author: true,
+                slug: true,
+                status: true,
+              },
+            },
           },
         },
       },
@@ -123,17 +135,18 @@ export async function generateSitemap(): Promise<string> {
     ),
   );
 
-  // Исключаем тонкие (< 5 расставленных книг) и неинформативные тир-листы от thin content
+  // Исключаем тонкие (< 5 осмысленных расставленных книг) и неинформативные тир-листы от thin content
   const tierListUrls = tierLists
     .filter((t) => {
-      const placements = (t as { placements?: { tierId: number | null; thoughts: string | null }[] }).placements;
-      const placed = placements?.filter((p) => p.tierId !== null) ?? [];
+      const placements = (t as { placements?: PlacedBookSeoItem[] }).placements ?? [];
+      const placed = placements.filter((p) => p.tierId !== null);
       const hasThoughts = placed.some((p) => Boolean(p.thoughts?.trim()));
+      const placedBooksCount = countMeaningfulPlacedBooks(placed);
       return isTierListIndexable({
         isPublic: true,
         title: t.title,
         description: t.description,
-        placedBooksCount: placed.length,
+        placedBooksCount,
         hasThoughts,
       });
     })

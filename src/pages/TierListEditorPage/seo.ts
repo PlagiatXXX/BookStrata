@@ -16,6 +16,12 @@ export const MIN_BOOKS_FOR_SEO = 5;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ONLY_DIGITS_RE = /^\d+$/;
+const LONG_DIGITS_RE = /^\d{6,}$/;
+const HEX_HASH_RE = /^[0-9a-f]{16,}$/i;
+const UUID_TITLE_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const FILE_TITLE_RE =
+  /^(?:image|img|photo|pic|picture|screenshot|screen|cover|scan|dsc|pxl|untitled|file|doc|page|безымянный|фото|скриншот|обложка|изображение|рисунок|картинка)(?:[\s._-]*(?:\(\d+\)|\d[\d._-]*))?(?:\.(?:jpe?g|png|webp|gif|bmp|avif))?$/i;
 const COPY_SUFFIX_RE = /\((копия|copy)\)\s*$/i;
 const GENERIC_TIER_LIST_TITLES = new Set([
   "тир-лист",
@@ -63,6 +69,42 @@ export function isLowValueTierListTitle(title: string | null | undefined): boole
   if (ONLY_DIGITS_RE.test(normalized)) return true;
   if (COPY_SUFFIX_RE.test(normalized)) return true;
   return GENERIC_TIER_LIST_TITLES.has(normalized);
+}
+
+/**
+ * Распознаёт технические названия книг (имена файлов, md5/hex-хэши, UUID, длинные ID),
+ * которые появляются при загрузке обложек без заполнения карточки.
+ */
+export function isTechnicalBookTitle(title: string | null | undefined): boolean {
+  const trimmed = title?.trim() ?? "";
+  if (trimmed.length <= 1) return true;
+  if (LONG_DIGITS_RE.test(trimmed)) return true;
+  if (HEX_HASH_RE.test(trimmed)) return true;
+  if (UUID_TITLE_RE.test(trimmed)) return true;
+  return FILE_TITLE_RE.test(trimmed);
+}
+
+export interface MeaningfulBookSeoInput {
+  title?: string | null;
+  author?: string | null;
+  thoughts?: string | null;
+  slug?: string | null;
+  status?: string | null;
+}
+
+/**
+ * Книга считается осмысленной для SEO и «Состава рейтинга», если у неё есть
+ * автор, мысли автора, статус published или нетехническое название.
+ */
+export function isMeaningfulBookForSeo(book: MeaningfulBookSeoInput): boolean {
+  if (!book.title?.trim()) return false;
+  const hasAuthor = Boolean(
+    book.author?.trim() && book.author.trim() !== "Неизвестен",
+  );
+  const hasThoughts = Boolean(book.thoughts?.trim());
+  const isCatalog = Boolean(book.slug && book.status === "published");
+  if (hasAuthor || hasThoughts || isCatalog) return true;
+  return !isTechnicalBookTitle(book.title);
 }
 
 /**

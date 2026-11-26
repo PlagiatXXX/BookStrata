@@ -235,4 +235,42 @@ describe("generateSitemap — тир-листы", () => {
     expect(xml).not.toContain("/tier-lists/tir-list-6q2uc6");
     expect(xml).toContain("/tier-lists/prochitano-regular");
   });
+
+  it("исключает из sitemap тир-листы, где < 5 книг с нормальными названиями (одни хэши и image (N))", async () => {
+    mocks.prisma.tierList.findMany.mockResolvedValue([
+      {
+        id: "tl-hashes",
+        slug: "knigi-kotorye-my-zasluzhili-etjrcn",
+        title: "Книги которые мы заслужили",
+        description: null,
+        updatedAt: new Date("2026-09-01"),
+        placements: [
+          { tierId: 1, thoughts: null, book: { title: "f7b21e2b0a472bece4e63b3e5d4fcf8e", author: null, slug: null, status: "draft" } },
+          { tierId: 1, thoughts: null, book: { title: "image (347)", author: null, slug: null, status: "draft" } },
+          { tierId: 1, thoughts: null, book: { title: "14055da3182a4fde2f91a5a7053f317d", author: null, slug: null, status: "draft" } },
+          { tierId: 1, thoughts: null, book: { title: "IMG_1234", author: null, slug: null, status: "draft" } },
+          { tierId: 1, thoughts: null, book: { title: "image (340)", author: null, slug: null, status: "draft" } },
+        ],
+      },
+      {
+        id: "tl-real",
+        slug: "real-books-list",
+        title: "Отличные книги",
+        description: null,
+        updatedAt: new Date("2026-09-01"),
+        placements: [
+          { tierId: 1, thoughts: null, book: { title: "1984", author: "Джордж Оруэлл", slug: "1984", status: "published" } },
+          { tierId: 1, thoughts: null, book: { title: "Дюна", author: "Фрэнк Герберт", slug: "dyuna", status: "published" } },
+          { tierId: 1, thoughts: null, book: { title: "Солярис", author: "Станислав Лем", slug: "solyaris", status: "published" } },
+          { tierId: 1, thoughts: null, book: { title: "Мы", author: "Евгений Замятин", slug: "my", status: "published" } },
+          { tierId: 1, thoughts: null, book: { title: "Идиот", author: "Фёдор Достоевский", slug: "idiot", status: "published" } },
+        ],
+      },
+    ]);
+
+    const xml = await generateSitemap();
+
+    expect(xml).not.toContain("/tier-lists/knigi-kotorye-my-zasluzhili-etjrcn");
+    expect(xml).toContain("/tier-lists/real-books-list");
+  });
 });

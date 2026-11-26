@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import type { Book, TierListData } from "@/types";
 import { pluralize } from "@/utils/pluralize";
-import { sanitizePublicAuthorName } from "../seo";
+import { isMeaningfulBookForSeo, sanitizePublicAuthorName } from "../seo";
+
+const MIN_MEANINGFUL_BOOKS_FOR_BREAKDOWN = 3;
 
 interface TierListTextBreakdownProps {
   title: string;
@@ -70,7 +72,7 @@ export function TierListTextBreakdown({
 
     const books = tier.bookIds
       .map((bookId) => listData.books[bookId])
-      .filter((b): b is Book => Boolean(b));
+      .filter((b): b is Book => Boolean(b) && isMeaningfulBookForSeo(b));
 
     if (books.length === 0) continue;
     totalPlaced += books.length;
@@ -82,7 +84,7 @@ export function TierListTextBreakdown({
     });
   }
 
-  if (totalPlaced === 0) return null;
+  if (totalPlaced < MIN_MEANINGFUL_BOOKS_FOR_BREAKDOWN) return null;
 
   const safeAuthor = sanitizePublicAuthorName(authorName);
   const summary = buildSummarySentence(title, safeAuthor, totalPlaced, groups);
