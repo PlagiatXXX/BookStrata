@@ -87,6 +87,7 @@ describe("AuthorPage", () => {
     vi.mocked(getAuthorBySlug).mockReset();
     vi.mocked(getAuthorAffiliateLink).mockReset();
     vi.mocked(getAuthorAffiliateLink).mockReturnValue([]);
+    document.head.querySelector('meta[name="robots"]')?.remove();
   });
 
   it("показывает имя, SEO-текст, количество книг и кнопку перехода к книгам автора на сайте", async () => {
@@ -196,6 +197,24 @@ describe("AuthorPage", () => {
     expect(screen.getByRole("button", { name: /книги автора на сайте/i })).toBeInTheDocument();
   });
 
+  it("автор без книг получает meta robots noindex, с книгами — индексируется", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue({ ...fixture, books: [] });
+    const { unmount } = renderPage();
+
+    expect(await screen.findByRole("heading", { name: "Лев Толстой" })).toBeInTheDocument();
+    expect(document.head.querySelector('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      "noindex, nofollow",
+    );
+    unmount();
+
+    vi.mocked(getAuthorBySlug).mockResolvedValue(fixture);
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: "Лев Толстой" })).toBeInTheDocument();
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+  });
+
   it("404 от API → NotFoundPage", async () => {
     const err = Object.assign(new Error("not found"), { status: 404 });
     vi.mocked(getAuthorBySlug).mockRejectedValue(err);
@@ -243,6 +262,7 @@ describe("Библиография", () => {
     vi.mocked(getAuthorBySlug).mockReset();
     vi.mocked(getAuthorAffiliateLink).mockReset();
     vi.mocked(getAuthorAffiliateLink).mockReturnValue([]);
+    document.head.querySelector('meta[name="robots"]')?.remove();
   });
 
   /** Карточки книг в порядке отображения */
@@ -396,6 +416,7 @@ describe("AuthorPage — лучшие/слабые книги и тир-лист
     vi.mocked(getAuthorBySlug).mockReset();
     vi.mocked(getAuthorAffiliateLink).mockReset();
     vi.mocked(getAuthorAffiliateLink).mockReturnValue([]);
+    document.head.querySelector('meta[name="robots"]')?.remove();
   });
 
   it("блоки «Лучшие книги» и «Слабые книги» с рейтингами", async () => {
@@ -481,6 +502,7 @@ describe("Секции ручного контента", () => {
     vi.mocked(getAuthorBySlug).mockReset();
     vi.mocked(getAuthorAffiliateLink).mockReset();
     vi.mocked(getAuthorAffiliateLink).mockReturnValue([]);
+    document.head.querySelector('meta[name="robots"]')?.remove();
   });
 
   it("hero: показывает badge, motto и hero-картинку", async () => {
@@ -880,6 +902,7 @@ describe("Экранизации и пресса", () => {
     vi.mocked(getAuthorBySlug).mockReset();
     vi.mocked(getAuthorAffiliateLink).mockReset();
     vi.mocked(getAuthorAffiliateLink).mockReturnValue([]);
+    document.head.querySelector('meta[name="robots"]')?.remove();
   });
 
   it("адаптации: пусто — секция скрыта, CTA при этом виден", async () => {

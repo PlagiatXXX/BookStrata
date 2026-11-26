@@ -47,7 +47,7 @@ interface BookRoute {
 async function main() {
   console.log("🔍 Подключаюсь к БД...");
   const books = await prisma.book.findMany({
-    where: { status: "published", slug: { not: null } },
+    where: { status: "published", slug: { not: null }, mergedIntoId: null },
     orderBy: { publishedAt: "asc" },
     select: {
       slug: true,

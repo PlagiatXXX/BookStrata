@@ -27,6 +27,19 @@ export type { AuthorBookDto, AuthorPageData };
 type AuthorAdaptation = AuthorPageData["adaptations"][number];
 
 /**
+ * Нормализация имени автора для устойчивого сопоставления дублей
+ * (ё→е, лишние пробелы и пробелы после точек в инициалах: «Б. К.» == «Б.К.»).
+ */
+export function normalizeAuthorName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/ё/g, "е")
+    .replace(/\.\s+/g, ".")
+    .replace(/\s+/g, " ");
+}
+
+/**
  * Эвристика: похоже ли имя на название книги, а не на автора.
  */
 export function looksLikeBookTitle(name: string): boolean {
@@ -107,25 +120,53 @@ function collectFilmFacts(
 
 export function createAuthorService(prisma: PrismaClient) {
   /**
-   * Найти автора по точному совпадению имени (case-insensitive)
+   * Найти автора по точному имени (case-insensitive), затем fallback по
+   * нормализованному имени (ё→е, пробелы в инициалах).
    */
   const findByName = async (name: string): Promise<AuthorResult | null> => {
-    const author = await prisma.author.findFirst({
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+
+    const exact = await prisma.author.findFirst({
       where: {
-        name: { equals: name, mode: "insensitive" },
+        name: { equals: trimmed, mode: "insensitive" },
       },
       include: {
         _count: { select: { books: true } },
       },
     });
 
+    if (exact) {
+      return {
+        id: exact.id,
+        name: exact.name,
+        slug: exact.slug,
+        bookCount: exact._count?.books ?? 0,
+        heroImageUrl: exact.heroImageUrl ?? null,
+      };
+    }
+
+    const normTarget = normalizeAuthorName(trimmed);
+    const candidates =
+      typeof prisma.author?.findMany === "function"
+        ? ((await prisma.author.findMany({
+            select: { id: true, name: true },
+          })) ?? [])
+        : [];
+    const matched = candidates.find((a) => normalizeAuthorName(a.name) === normTarget);
+    if (!matched) return null;
+
+    const author = await prisma.author.findUnique({
+      where: { id: matched.id },
+      include: { _count: { select: { books: true } } },
+    });
     if (!author) return null;
 
     return {
       id: author.id,
       name: author.name,
       slug: author.slug,
-      bookCount: author._count.books,
+      bookCount: author._count?.books ?? 0,
       heroImageUrl: author.heroImageUrl ?? null,
     };
   };
@@ -187,15 +228,16 @@ export function createAuthorService(prisma: PrismaClient) {
     if (uniqueNames.length === 0) return new Map();
 
     // Загружаем существующих авторов (без insensitive mode в in-условии)
-    const existing = await prisma.author.findMany({
-      where: { name: { in: uniqueNames } },
-      include: { _count: { select: { books: true } } },
-    });
+    const existing =
+      (await prisma.author.findMany({
+        where: { name: { in: uniqueNames } },
+        include: { _count: { select: { books: true } } },
+      })) ?? [];
 
-    // Строим lookup: lowercase → AuthorResult (существующие)
+    // Строим lookup: normalizeAuthorName → AuthorResult (существующие)
     const existingMap = new Map<string, AuthorResult>();
     for (const author of existing) {
-      existingMap.set(author.name.toLowerCase(), {
+      existingMap.set(normalizeAuthorName(author.name), {
         id: author.id,
         name: author.name,
         slug: author.slug,
@@ -207,7 +249,7 @@ export function createAuthorService(prisma: PrismaClient) {
     const result = new Map<string, AuthorResult>();
 
     for (const name of uniqueNames) {
-      const found = existingMap.get(name.toLowerCase());
+      const found = existingMap.get(normalizeAuthorName(name));
       if (found) {
         result.set(name, found);
       } else {

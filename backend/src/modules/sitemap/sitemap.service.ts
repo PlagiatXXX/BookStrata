@@ -88,12 +88,15 @@ export async function generateSitemap(): Promise<string> {
     // таблица celebrities ещё не создана — пропускаем
   }
 
-  // Авторы — все со slug: страница отдаётся и без seoDescription
-  // (описание в метах — фолбэк), пустой sitemap блокировал индексацию раздела
+  // Авторы — со slug и хотя бы одной опубликованной каталоговой книгой
+  // (описание в метах — фолбэк; пустых авторов без книг в sitemap не отдаём)
   let authors: { slug: string; updatedAt: Date }[] = [];
   try {
     const authorRecords = await prisma.author.findMany({
-      where: { slug: { not: null } },
+      where: {
+        slug: { not: null },
+        books: { some: { status: "published", userId: null } },
+      },
       select: { slug: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
       take: 2000,
@@ -164,7 +167,7 @@ export async function generateSitemap(): Promise<string> {
   let books: { slug: string; updatedAt: Date }[] = [];
   try {
     const bookRecords = await prisma.book.findMany({
-      where: { status: "published", slug: { not: null } },
+      where: { status: "published", slug: { not: null }, mergedIntoId: null },
       select: { slug: true, updatedAt: true },
       orderBy: { publishedAt: "asc" },
       take: 45000,

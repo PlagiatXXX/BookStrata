@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { PrismaClient } from '@prisma/client';
-import { looksLikeBookTitle, createAuthorService } from './authors.service.js';
+import { looksLikeBookTitle, normalizeAuthorName, createAuthorService } from './authors.service.js';
 
 describe('looksLikeBookTitle', () => {
   describe('реальные имена авторов — должны вернуть false', () => {
@@ -82,7 +82,9 @@ describe('looksLikeBookTitle', () => {
 
 interface MockOverrides {
   authorFindUnique?: unknown;
+  authorFindFirst?: unknown;
   authorFindMany?: unknown;
+  authorCreate?: unknown;
   placementFindMany?: unknown;
 }
 
@@ -90,7 +92,11 @@ function makePrisma(overrides: MockOverrides = {}) {
   return {
     author: {
       findUnique: vi.fn().mockResolvedValue(overrides.authorFindUnique ?? null),
+      findFirst: vi.fn().mockResolvedValue(overrides.authorFindFirst ?? null),
       findMany: vi.fn().mockResolvedValue(overrides.authorFindMany ?? []),
+      create: vi.fn().mockResolvedValue(
+        overrides.authorCreate ?? { id: 999, name: 'Новый Автор', slug: 'novyj-avtor', heroImageUrl: null },
+      ),
     },
     bookPlacement: {
       findMany: vi.fn().mockResolvedValue(overrides.placementFindMany ?? []),
@@ -518,5 +524,80 @@ describe("list", () => {
     const authors = await service.list({ sort: "popular", limit: 2 });
 
     expect(authors.map((a) => a.slug)).toEqual(["b", "v"]);
+  });
+});
+
+describe("normalizeAuthorName и поиск дублей в findOrCreate", () => {
+  it("нормализует ё→е, пробелы в инициалах и регистр", () => {
+    expect(normalizeAuthorName("Фёдор Достоевский")).toBe(
+      normalizeAuthorName("Федор   Достоевский"),
+    );
+    expect(normalizeAuthorName("Б. К. Борисон")).toBe(
+      normalizeAuthorName("Б.К. Борисон"),
+    );
+  });
+
+  it("findOrCreate: «Федор Достоевский» находит существующего «Фёдор Достоевский» без create", async () => {
+    const existing = {
+      id: 182,
+      name: "Фёдор Достоевский",
+      slug: "fyodor-dostoevskij",
+      heroImageUrl: null,
+      _count: { books: 10 },
+    };
+    const { service, prisma } = makeService({
+      authorFindFirst: null,
+      authorFindMany: [{ id: 182, name: "Фёдор Достоевский" }],
+    });
+    prisma.author.findUnique.mockImplementation(async (args: { where: { id?: number } }) =>
+      args.where.id === 182 ? existing : null,
+    );
+
+    const result = await service.findOrCreate("Федор Достоевский");
+
+    expect(result.id).toBe(182);
+    expect(result.name).toBe("Фёдор Достоевский");
+    expect(prisma.author.create).not.toHaveBeenCalled();
+  });
+
+  it("findOrCreate: «Б.К. Борисон» находит существующего «Б. К. Борисон» без create", async () => {
+    const existing = {
+      id: 1160,
+      name: "Б. К. Борисон",
+      slug: "b-k-borison",
+      heroImageUrl: null,
+      _count: { books: 1 },
+    };
+    const { service, prisma } = makeService({
+      authorFindFirst: null,
+      authorFindMany: [{ id: 1160, name: "Б. К. Борисон" }],
+    });
+    prisma.author.findUnique.mockImplementation(async (args: { where: { id?: number } }) =>
+      args.where.id === 1160 ? existing : null,
+    );
+
+    const result = await service.findOrCreate("Б.К. Борисон");
+
+    expect(result.id).toBe(1160);
+    expect(prisma.author.create).not.toHaveBeenCalled();
+  });
+
+  it("findOrCreate: нового автора создаёт со slug", async () => {
+    const { service, prisma } = makeService({
+      authorFindFirst: null,
+      authorFindMany: [],
+      authorFindUnique: null,
+      authorCreate: {
+        id: 2001,
+        name: "Новый Автор",
+        slug: "novyj-avtor",
+        heroImageUrl: null,
+      },
+    });
+
+    const result = await service.findOrCreate("Новый Автор");
+
+    expect(result.id).toBe(2001);
+    expect(prisma.author.create).toHaveBeenCalledTimes(1);
   });
 });

@@ -54,7 +54,10 @@ interface AuthorRoute {
 async function main() {
   console.log("🔍 Подключаюсь к БД...");
   const authors = await prisma.author.findMany({
-    where: { slug: { not: null } },
+    where: {
+      slug: { not: null },
+      books: { some: { status: "published", userId: null } },
+    },
     orderBy: { name: "asc" },
     select: {
       slug: true,

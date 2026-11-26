@@ -88,6 +88,7 @@ export default function AuthorPage() {
         description={buildAuthorDescription(seoText)}
         url={`/authors/${author.slug}`}
         image={books[0]?.coverImageUrl}
+        noindex={books.length === 0}
         breadcrumbs={[
           { name: "Главная", url: "/" },
           { name: "Все авторы", url: "/authors" },

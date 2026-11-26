@@ -53,11 +53,14 @@ describe("generateSitemap — страницы авторов", () => {
     expect(xml).toContain("<loc>https://bookstrata.ru/copyright</loc>");
   });
 
-  it("фильтрует по slug != null (без условия на seoDescription)", async () => {
+  it("фильтрует по slug != null и наличию хотя бы одной опубликованной каталоговой книги", async () => {
     await generateSitemap();
     expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { slug: { not: null } },
+        where: {
+          slug: { not: null },
+          books: { some: { status: "published", userId: null } },
+        },
         select: { slug: true, updatedAt: true },
       }),
     );
@@ -110,15 +113,20 @@ describe("generateSitemap — книги каталога", () => {
     expect(xml).toContain("<loc>https://bookstrata.ru/books/book-1150</loc>");
   });
 
-  it("запрашивает книги без лимита в 1000", async () => {
+  it("запрашивает книги без лимита в 1000 и без mergedIntoId", async () => {
     mocks.prisma.book.findMany.mockResolvedValue([]);
 
     await generateSitemap();
 
     const args = mocks.prisma.book.findMany.mock.calls[0]?.[0] as
-      | { take?: number }
+      | { take?: number; where?: unknown }
       | undefined;
     expect(args?.take === undefined || args.take > 1000).toBe(true);
+    expect(args?.where).toEqual({
+      status: "published",
+      slug: { not: null },
+      mergedIntoId: null,
+    });
   });
 });
 
