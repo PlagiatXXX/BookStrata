@@ -5,7 +5,7 @@ export interface CreateFeedbackInput {
   userId?: number | null;
   type: string;
   message: string;
-  rating?: string | null;
+  rating?: number | null;
   pageUrl?: string | null;
   userEmail?: string | null;
 }

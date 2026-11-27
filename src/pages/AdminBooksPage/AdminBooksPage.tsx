@@ -304,7 +304,13 @@ export default function AdminBooksPage() {
             unpublishing={h.unpublishMutation.isPending}
             enriching={h.enrichMutation.isPending}
             enrichResult={h.enrichMutation.data?.updated ?? null}
-            onSave={(patch) => h.saveMutation.mutate({ id: editingBook.id, patch })}
+            onSave={(patch, characters) =>
+              h.saveMutation.mutateAsync({
+                id: editingBook.id,
+                patch,
+                characters,
+              })
+            }
             onPublish={handlePublish}
             onUnpublish={() => h.unpublishMutation.mutate(editingBook.id)}
             onEnrich={() => h.enrichMutation.mutate(editingBook.id)}

@@ -4,15 +4,17 @@ export interface TelegramFeedbackPayload {
   username?: string | null;
   userEmail?: string | null;
   userId?: number | null;
-  rating?: string | null;
+  rating?: string | number | null;
   message?: string | null;
   pageUrl?: string | null;
 }
 
 const RATING_MAP: Record<string, string> = {
-  great: "😍 Всё отлично",
-  neutral: "🤔 Есть вопросы / идеи",
-  bad: "🙁 Неудобно / сложно",
+  "1": "🙁 1 — Плохо",
+  "2": "😕 2 — Не очень",
+  "3": "😐 3 — Нормально",
+  "4": "🙂 4 — Хорошо",
+  "5": "😍 5 — Отлично",
 };
 
 export function escapeHtml(str: string): string {
@@ -24,8 +26,8 @@ export function escapeHtml(str: string): string {
 }
 
 export function formatFeedbackHtml(payload: TelegramFeedbackPayload): string {
-  const ratingText = payload.rating
-    ? RATING_MAP[payload.rating] || escapeHtml(payload.rating)
+  const ratingText = payload.rating != null
+    ? RATING_MAP[String(payload.rating)] || escapeHtml(String(payload.rating))
     : "Не указана";
 
   const userParts: string[] = [];

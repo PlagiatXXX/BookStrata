@@ -3,6 +3,7 @@
 // правка полей + slug с историей, публикация, merge дублей, обогащение
 // из Google Books, топ по просмотрам, модерация комментариев.
 import { apiClient } from "./api-client";
+import { type BookCharacterView, type CharacterRole } from "./bookApi";
 
 export interface ContextChainItem {
   icon: string;
@@ -87,6 +88,29 @@ export interface AdminBookDetail extends AdminBookListItem {
   createdAt: string;
   authorRel: { name: string } | null;
   slugHistory: { id: number; oldSlug: string; createdAt: string }[];
+  characters?: BookCharacterView[];
+}
+
+export interface AdminCharacterSearchItem {
+  id: number;
+  slug: string;
+  name: string;
+  aliases: string[];
+  universeSlug: string | null;
+  traits: string[];
+  bookCount: number;
+}
+
+export interface BookCharacterInput {
+  characterId?: number;
+  name: string;
+  aliases: string[];
+  universeSlug?: string | null;
+  role: CharacterRole;
+  summary: string;
+  traits: string[];
+  sortOrder?: number;
+  relations: Array<{ targetName: string; label: string }>;
 }
 
 export interface BookListParams {
@@ -272,4 +296,21 @@ export async function updateAdminComment(id: number, content: string) {
 
 export async function deleteAdminComment(id: number) {
   return apiClient.delete(`/admin/books/comments/${id}`);
+}
+
+export async function searchAdminCharacters(q: string) {
+  const qs = new URLSearchParams({ q });
+  return apiClient.get<{ items: AdminCharacterSearchItem[] }>(
+    `/admin/characters?${qs.toString()}`,
+  );
+}
+
+export async function replaceAdminBookCharacters(
+  bookId: number,
+  items: BookCharacterInput[],
+) {
+  return apiClient.put<{ characters: BookCharacterView[] }>(
+    `/admin/books/${bookId}/characters`,
+    { items },
+  );
 }

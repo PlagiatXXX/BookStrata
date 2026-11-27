@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef } from "react";
+import { parseAiJson } from "@/utils/aiJson";
 import type { DragEndEvent } from "@dnd-kit/core";
 import type { CuratedBook, CuratedTier } from "../components/types";
 import { genId, TIER_COLORS } from "../components/types";
@@ -283,7 +284,7 @@ export function useCollectionEditor(
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(trimmed);
+      parsed = parseAiJson(trimmed);
     } catch {
       setJsonImportError("Невалидный JSON. Проверьте синтаксис.");
       return;

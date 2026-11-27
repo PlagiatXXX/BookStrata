@@ -139,6 +139,7 @@ collectionBooks CollectionBook[]
 celebrityBooks  CelebrityBook[]
 authorRel       Author?         @relation(fields: [authorId], references: [id], onDelete: Restrict)
 authorShowcase  AuthorShowcase[]
+characters      BookCharacter[]
 createdAt       DateTime        @default(now()) @map("created_at")
 updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
 
@@ -933,4 +934,63 @@ model ReadingDnaDuel {
   @@index([targetDnaId])
   @@index([challengerDnaId])
   @@map("reading_dna_duels")
+}
+
+enum CharacterRole {
+  protagonist
+  antagonist
+  supporting
+  minor
+}
+
+model Character {
+  id           Int             @id @default(autoincrement())
+  name         String
+  slug         String          @unique
+  aliases      String[]        @default([])
+  universeSlug String?         @map("universe_slug")
+  traits       String[]        @default([])
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  books BookCharacter[]
+
+  @@index([name])
+  @@index([universeSlug])
+  @@index([aliases], type: Gin)
+  @@map("characters")
+}
+
+model BookCharacter {
+  id          Int           @id @default(autoincrement())
+  bookId      Int           @map("book_id")
+  characterId Int           @map("character_id")
+  role        CharacterRole @default(supporting)
+  summary     String
+  traits      String[]      @default([])
+  sortOrder   Int           @default(0) @map("sort_order")
+
+  book          Book                    @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  character     Character               @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  relationsFrom BookCharacterRelation[] @relation("RelationFrom")
+  relationsTo   BookCharacterRelation[] @relation("RelationTo")
+
+  @@unique([bookId, characterId])
+  @@index([bookId, sortOrder])
+  @@index([characterId])
+  @@map("book_characters")
+}
+
+model BookCharacterRelation {
+  id     Int    @id @default(autoincrement())
+  fromId Int    @map("from_id")
+  toId   Int    @map("to_id")
+  label  String
+
+  from BookCharacter @relation("RelationFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to   BookCharacter @relation("RelationTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([fromId, toId, label])
+  @@index([toId])
+  @@map("book_character_relations")
 }

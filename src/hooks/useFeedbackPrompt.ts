@@ -150,7 +150,7 @@ export function useFeedbackPrompt() {
   }, [user?.userId]);
 
   const handleSubmit = useCallback(
-    async (input: { rating: "great" | "neutral" | "bad"; message?: string }) => {
+    async (input: { rating: number; message?: string }) => {
       try {
         await sendFeedback({
           type: "survey",

@@ -463,6 +463,10 @@ fastify.register(adminBooksRoutes, { prefix: "/api/admin/books" });
 import { adminAuthorsRoutes } from "./modules/admin-authors/admin-authors.route.js";
 fastify.register(adminAuthorsRoutes, { prefix: "/api/admin/authors" });
 
+// Admin: поиск канонических персонажей (для автодополнения в редакторе книг)
+import { adminCharactersRoutes } from "./modules/characters/admin-characters.route.js";
+fastify.register(adminCharactersRoutes, { prefix: "/api/admin/characters" });
+
 // Sitemap (без /api префикса, доступен по /sitemap.xml)
 import { sitemapRoutes } from "../src/modules/sitemap/sitemap.route.js";
 fastify.register(sitemapRoutes);

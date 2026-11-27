@@ -5,6 +5,7 @@
 // «простое» и т.п.). Валидация едина для admin PATCH и bulk-импорта.
 
 import { z } from "zod";
+import { parseAiJson } from "../../utils/aiJson.js";
 
 /** Допустимые значения темпа чтения */
 export const READING_PACE_VALUES = [
@@ -100,12 +101,6 @@ export type ReadingGuide = z.infer<typeof readingGuideSchema> & {
  * Бросает SyntaxError при битом JSON и ZodError при невалидной структуре.
  */
 export function sanitizeAndParseReadingGuide(raw: string): ReadingGuide {
-  let cleaned = raw.trim();
-  if (cleaned.startsWith("```")) {
-    cleaned = cleaned
-      .replace(/^```(?:json)?\s*/i, "")
-      .replace(/\s*```\s*$/, "");
-  }
-  const parsed: unknown = JSON.parse(cleaned);
+  const parsed: unknown = parseAiJson(raw);
   return readingGuideSchema.parse(parsed);
 }

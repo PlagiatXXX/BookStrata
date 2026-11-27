@@ -124,7 +124,7 @@ describe("Feedback Routes", () => {
       const { sendTelegramFeedbackNotification } = await import("../../lib/telegramNotifier.js")
 
       vi.mocked(prisma.feedback.create).mockResolvedValue({
-        id: 3, userId: 2, type: "survey", message: "[Оценка: great] Классный сайт",
+        id: 3, userId: 2, type: "survey", message: "[Оценка: 5] Классный сайт",
       } as any)
       vi.mocked(prisma.user.update).mockResolvedValue({ id: 2 } as any)
 
@@ -132,7 +132,7 @@ describe("Feedback Routes", () => {
         method: "POST",
         url: "/api/feedback",
         headers: { authorization: "Bearer user-token" },
-        payload: { type: "survey", rating: "great", message: "Классный сайт", pageUrl: "/rankings" },
+        payload: { type: "survey", rating: 5, message: "Классный сайт", pageUrl: "/rankings" },
       })
 
       expect(res.statusCode).toBe(201)
@@ -146,7 +146,7 @@ describe("Feedback Routes", () => {
       )
       expect(sendTelegramFeedbackNotification).toHaveBeenCalledWith(
         expect.objectContaining({
-          rating: "great",
+          rating: 5,
           message: "Классный сайт",
           pageUrl: "/rankings",
         })

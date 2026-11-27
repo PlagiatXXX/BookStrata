@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+const characterMocks = vi.hoisted(() => ({
+  getBookCharactersView: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("../characters/characters.service.js", () => ({
+  getBookCharactersView: characterMocks.getBookCharactersView,
+}));
+
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     book: {
@@ -54,16 +62,22 @@ const draftBook = {
 };
 
 describe("getBookPageData", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    characterMocks.getBookCharactersView.mockReset();
+    characterMocks.getBookCharactersView.mockResolvedValue([]);
+  });
 
   it("возвращает null, если книга не найдена", async () => {
     (prisma.book.findUnique as any).mockResolvedValue(null);
     expect(await getBookPageData("net-takoy", 1)).toBeNull();
+    expect(characterMocks.getBookCharactersView).not.toHaveBeenCalled();
   });
 
   it("возвращает null для draft-книги (404 на роуте)", async () => {
     (prisma.book.findUnique as any).mockResolvedValue(draftBook);
     expect(await getBookPageData("draft-book", 1)).toBeNull();
+    expect(characterMocks.getBookCharactersView).not.toHaveBeenCalled();
   });
 
   it("собирает tierLists/collections/celebrities только публичные", async () => {
@@ -290,6 +304,7 @@ describe("getBookPageData", () => {
     const page = await getBookPageData("rtut-kelli-hart", 1);
 
     expect(page).toEqual({ redirectTo: "/books/rtut-kelly-hart" });
+    expect(characterMocks.getBookCharactersView).not.toHaveBeenCalled();
     expect((prisma.bookSlugHistory.findUnique as any).mock.calls[0][0]).toEqual(
       {
         where: { oldSlug: "rtut-kelli-hart" },
@@ -316,6 +331,7 @@ describe("getBookPageData", () => {
     const page = await getBookPageData("rtut-kelli-hart", 1);
 
     expect(page).toEqual({ redirectTo: "/books/rtut-kelly-hart" });
+    expect(characterMocks.getBookCharactersView).not.toHaveBeenCalled();
   });
 
   it("поглощённая книга без опубликованного канона → null (404)", async () => {
@@ -324,5 +340,37 @@ describe("getBookPageData", () => {
       .mockResolvedValueOnce({ slug: null, status: "draft" });
 
     expect(await getBookPageData("rtut-kelli-hart", 1)).toBeNull();
+    expect(characterMocks.getBookCharactersView).not.toHaveBeenCalled();
+  });
+
+  it("пробрасывает characters из getBookCharactersView(book.id)", async () => {
+    const characters = [
+      {
+        id: 1,
+        characterId: 11,
+        slug: "pierre-bezukhov",
+        name: "Пьер Безухов",
+        aliases: [],
+        universeSlug: null,
+        role: "protagonist",
+        summary: "Искатель истины, один из центральных героев романа.",
+        traits: ["доброта"],
+        relations: [],
+        otherBooks: [],
+      },
+    ];
+    (prisma.book.findUnique as any).mockResolvedValue(publishedBook);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
+    (prisma.collection.findMany as any).mockResolvedValue([]);
+    (prisma.celebrity.findMany as any).mockResolvedValue([]);
+    (prisma.book.findMany as any).mockResolvedValue([]);
+    (prisma.bookComment.findMany as any).mockResolvedValue([]);
+    (prisma.bookComment.count as any).mockResolvedValue(0);
+    characterMocks.getBookCharactersView.mockResolvedValueOnce(characters);
+
+    const page = await getBookPageData("voyna-i-mir");
+
+    expect(characterMocks.getBookCharactersView).toHaveBeenCalledWith(1);
+    expect(asBookPage(page).characters).toEqual(characters);
   });
 });

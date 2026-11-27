@@ -2,7 +2,7 @@
 // Редактор книги (Фаза 7): поля SEO-карточки, slug с историей, статус
 // (publish через инвариант полноты), обогащение из Google Books, merge,
 // редактор contextChain ({ icon, title, text }) с иконками Material Symbols.
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
   ArrowDown,
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type {
   AdminBookDetail,
+  BookCharacterInput,
   BookUpdateInput,
   ContextChainItem,
   ReadingGuide,
@@ -29,6 +30,13 @@ import { parseAnimatedCoverUrl, formatAnimatedCoverUrl } from "@/utils/animatedC
 import { buildBookAnimationPrompt, buildBookAnimationSpecs } from "./coverPromptHelper";
 import { ReadingProfilePrompt } from "./ReadingProfilePrompt";
 import { ReadingGuidePrompt } from "./ReadingGuidePrompt";
+import { BookCharactersEditor } from "./BookCharactersEditor";
+import {
+  normalizeCharactersForSave,
+  toCharacterInputs,
+  validateBookCharacters,
+} from "./charactersEditorUtils";
+import { parseAiJson } from "@/utils/aiJson";
 
 /** Обязательные ключи AI-паспорта (для клиентской проверки поля в модалке).
  *  Полную zod-валидацию делает бэкенд при PATCH. */
@@ -42,21 +50,10 @@ const GUIDE_REQUIRED_KEYS = [
   "key_takeaways",
 ] as const;
 
-/** Срезает markdown-обёртку ```json ... ``` из ответа ИИ */
-function stripMarkdownFence(raw: string): string {
-  let cleaned = raw.trim();
-  if (cleaned.startsWith("```")) {
-    cleaned = cleaned
-      .replace(/^```(?:json)?\s*/i, "")
-      .replace(/\s*```\s*$/, "");
-  }
-  return cleaned;
-}
-
 /** Парсит JSON из чата ИИ → объект паспорта | null (битый JSON) */
 function parseGuideJson(raw: string): ReadingGuide | null {
   try {
-    const parsed: unknown = JSON.parse(stripMarkdownFence(raw));
+    const parsed: unknown = parseAiJson(raw);
     if (typeof parsed !== "object" || parsed === null) return null;
     const obj = parsed as Record<string, unknown>;
     for (const key of GUIDE_REQUIRED_KEYS) {
@@ -114,7 +111,10 @@ interface Props {
   unpublishing: boolean;
   enriching: boolean;
   enrichResult: string[] | null;
-  onSave: (patch: BookUpdateInput) => void;
+  onSave: (
+    patch: BookUpdateInput,
+    characters?: BookCharacterInput[],
+  ) => void | Promise<unknown>;
   onPublish: () => void;
   onUnpublish: () => void;
   onEnrich: () => void;
@@ -140,6 +140,17 @@ export function BookEditModal({
   const [chain, setChain] = useState<ContextChainItem[]>(
     book.contextChain ?? [],
   );
+  const [characters, setCharacters] = useState<BookCharacterInput[]>(() =>
+    toCharacterInputs(book.characters),
+  );
+  const [charactersDirty, setCharactersDirty] = useState(false);
+  const [charactersError, setCharactersError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!charactersDirty) {
+      setCharacters(toCharacterInputs(book.characters));
+    }
+  }, [book.characters, charactersDirty]);
   // AI-паспорт: сырой текст (может быть с ```json-обёрткой от ИИ) и ошибка
   // валидации. Парсинг — на blur; PATCH отправляет объект или null.
   const [guideInput, setGuideInput] = useState<string>(
@@ -273,7 +284,7 @@ export function BookEditModal({
       return;
     }
     try {
-      const parsed: unknown = JSON.parse(stripMarkdownFence(raw));
+      const parsed: unknown = parseAiJson(raw);
       if (typeof parsed !== "object" || parsed === null) {
         setProfileError("Невалидный JSON");
         return;
@@ -901,6 +912,22 @@ export function BookEditModal({
           </div>
         </div>
 
+        {/* Персонажи книги */}
+        <BookCharactersEditor
+          bookTitle={currentBookTitle}
+          bookAuthor={currentBookAuthor}
+          genre={form.genre !== undefined ? form.genre : book.genre}
+          description={
+            form.description !== undefined ? form.description : book.description
+          }
+          value={characters}
+          onChange={(next) => {
+            setCharacters(next);
+            setCharactersDirty(true);
+            setCharactersError(null);
+          }}
+        />
+
         {enrichResult && (
           <p className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
             Обогащено из Google Books:{" "}
@@ -924,22 +951,90 @@ export function BookEditModal({
           </span>
         </label>
 
+        {charactersError && (
+          <p className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+            {charactersError}
+          </p>
+        )}
+
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-(--ink-3) pt-4">
           <button
-            onClick={() => {
-              // Битый JSON паспорта/профиля — не отправляем поле вовсе, чтобы
-              // случайный мусор не затёр существующие данные в БД.
-              const rest = { ...form };
-              delete rest.readingGuide;
-              delete rest.readingProfile;
-              onSave({
-                ...(guideError ? rest : profileError ? rest : form),
+            onClick={async () => {
+              if (charactersDirty) {
+                const validationError = validateBookCharacters(characters);
+                if (validationError) {
+                  setCharactersError(validationError);
+                  return;
+                }
+              }
+              setCharactersError(null);
+
+              // Синхронный парсинг полей AI-паспорта/профиля: даже если
+              // пользователь вставил текст и сразу нажал «Сохранить» (без blur),
+              // очищаем артефакты копипаста и форматируем JSON.
+              const nextForm: BookUpdateInput = { ...form };
+
+              const guideRaw = guideInput.trim();
+              if (guideRaw) {
+                const parsedGuide = parseGuideJson(guideRaw);
+                if (parsedGuide) {
+                  nextForm.readingGuide = parsedGuide;
+                  setGuideInput(JSON.stringify(parsedGuide, null, 2));
+                  setGuideError(null);
+                } else {
+                  delete nextForm.readingGuide;
+                  setGuideError(
+                    "Невалидный JSON паспорта: проверьте кавычки, скобки и наличие всех 7 полей",
+                  );
+                }
+              } else {
+                nextForm.readingGuide = null;
+                setGuideError(null);
+              }
+
+              const profileRaw = profileInput.trim();
+              if (profileRaw) {
+                try {
+                  const parsed: unknown = parseAiJson(profileRaw);
+                  if (typeof parsed !== "object" || parsed === null) {
+                    throw new Error("invalid");
+                  }
+                  const obj = parsed as Record<string, unknown>;
+                  for (const key of PROFILE_REQUIRED_KEYS) {
+                    if (!(key in obj)) throw new Error("missing");
+                  }
+                  nextForm.readingProfile = parsed as ReadingProfile;
+                  setProfileInput(JSON.stringify(parsed, null, 2));
+                  setProfileError(null);
+                } catch {
+                  delete nextForm.readingProfile;
+                  setProfileError("Невалидный JSON: проверьте синтаксис");
+                }
+              } else {
+                nextForm.readingProfile = null;
+                setProfileError(null);
+              }
+
+              const patch: BookUpdateInput = {
+                ...nextForm,
                 tags: tagsInput
                   .split(",")
                   .map((t) => t.trim())
                   .filter(Boolean),
                 contextChain: chain,
-              });
+              };
+              try {
+                if (charactersDirty) {
+                  await Promise.resolve(
+                    onSave(patch, normalizeCharactersForSave(characters)),
+                  );
+                  setCharactersDirty(false);
+                } else {
+                  await Promise.resolve(onSave(patch));
+                }
+              } catch {
+                // Ошибка сохранения отображается вызывающей стороной; dirty сохраняется
+              }
             }}
             disabled={saving}
             className="rounded-lg bg-(--accent-main) px-4 py-2 text-sm font-semibold text-(--bg-0) hover:opacity-90 disabled:opacity-50 cursor-pointer"

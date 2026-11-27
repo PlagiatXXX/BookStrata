@@ -81,6 +81,34 @@ export interface BookPageCommentList {
   total: number;
 }
 
+export type CharacterRole = "protagonist" | "antagonist" | "supporting" | "minor";
+
+export interface BookCharacterRelationView {
+  targetCharacterId: number;
+  targetName: string;
+  label: string;
+}
+
+export interface BookCharacterOtherBook {
+  id: number;
+  slug: string;
+  title: string;
+}
+
+export interface BookCharacterView {
+  id: number;
+  characterId: number;
+  slug: string;
+  name: string;
+  aliases: string[];
+  universeSlug: string | null;
+  role: CharacterRole;
+  summary: string;
+  traits: string[];
+  relations: BookCharacterRelationView[];
+  otherBooks: BookCharacterOtherBook[];
+}
+
 /** Полный ответ GET /api/books/:slug */
 export interface BookPageData {
   book: {
@@ -112,6 +140,7 @@ export interface BookPageData {
   otherBooksByAuthor: BookCard[];
   comments: BookPageCommentList;
   userLike: boolean;
+  characters?: BookCharacterView[];
 }
 
 export interface LikeToggleResult {

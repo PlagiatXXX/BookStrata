@@ -39,6 +39,9 @@ const mocks = vi.hoisted(() => ({
   validateRemoteImageDimensions: vi.fn().mockResolvedValue(null),
   deleteIfOrphaned: vi.fn().mockResolvedValue(true),
   processAndUploadAnimatedCover: vi.fn(),
+  getBookCharactersView: vi.fn().mockResolvedValue([]),
+  replaceBookCharacters: vi.fn().mockResolvedValue([]),
+  transferCharactersIfCanonEmpty: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./video-processor.service.js", () => ({
@@ -81,6 +84,11 @@ vi.mock("../books/bookDedupe.service.js", () => ({
 }));
 vi.mock("../authors/authors.service.js", () => ({
   createAuthorService: () => ({ findOrCreate: mocks.findOrCreate }),
+}));
+vi.mock("../characters/characters.service.js", () => ({
+  getBookCharactersView: mocks.getBookCharactersView,
+  replaceBookCharacters: mocks.replaceBookCharacters,
+  transferCharactersIfCanonEmpty: mocks.transferCharactersIfCanonEmpty,
 }));
 vi.mock("../../lib/validators.js", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../lib/validators.js")>()),
@@ -176,6 +184,12 @@ describe("Admin Books Routes", () => {
     mocks.publishBook.mockImplementation(() => Promise.resolve({ id: 10, status: "published" }));
     mocks.unpublishBook.mockImplementation(() => Promise.resolve({ id: 10, status: "draft" }));
     mocks.findOrCreate.mockImplementation((name: string) => Promise.resolve({ id: 99, name }));
+    mocks.getBookCharactersView.mockReset();
+    mocks.getBookCharactersView.mockResolvedValue([]);
+    mocks.replaceBookCharacters.mockReset();
+    mocks.replaceBookCharacters.mockResolvedValue([]);
+    mocks.transferCharactersIfCanonEmpty.mockReset();
+    mocks.transferCharactersIfCanonEmpty.mockResolvedValue(undefined);
     // По умолчанию просмотров нет; top-views тесты переопределяют ниже
     mocks.prisma.analyticsEvent.groupBy.mockResolvedValue([]);
     app = await createApp();
@@ -1619,5 +1633,270 @@ describe("Admin Books Routes", () => {
 
       expect(response.statusCode).toBe(400);
     });
+  });
+
+  describe("персонажи книги (GET /:id, merge, PUT /:id/characters)", () => {
+    it("GET /:id включает characters из getBookCharactersView", async () => {
+      const characters = [
+        {
+          id: 1,
+          characterId: 100,
+          slug: "anna-karenina",
+          name: "Анна Каренина",
+          aliases: [],
+          universeSlug: null,
+          role: "protagonist",
+          summary: "Главная героиня романа Льва Толстого.",
+          traits: ["страсть"],
+          relations: [],
+          otherBooks: [],
+        },
+      ];
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.getBookCharactersView.mockResolvedValueOnce(characters);
+
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(mocks.getBookCharactersView).toHaveBeenCalledWith(10);
+      expect(res.json().data.characters).toEqual(characters);
+    });
+
+    it("GET /:id → 404 не вызывает getBookCharactersView", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce(null);
+
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books/999",
+        headers: { authorization: "Bearer admin-token" },
+      });
+
+      expect(res.statusCode).toBe(404);
+      expect(mocks.getBookCharactersView).not.toHaveBeenCalled();
+    });
+
+    it.each(["abc", "0", "-1", "1.5"])(
+      "GET /:id → 400 при некорректном id (%s)",
+      async (badId) => {
+        const res = await app.inject({
+          method: "GET",
+          url: `/api/admin/books/${badId}`,
+          headers: { authorization: "Bearer admin-token" },
+        });
+
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error.code).toBe("validation_error");
+        expect(mocks.prisma.book.findUnique).not.toHaveBeenCalled();
+        expect(mocks.getBookCharactersView).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(["abc", "0", "-1", "1.5"])(
+      "POST /:id/merge → 400 при некорректном id (%s)",
+      async (badId) => {
+        const res = await app.inject({
+          method: "POST",
+          url: `/api/admin/books/${badId}/merge`,
+          headers: { authorization: "Bearer admin-token" },
+          payload: { targetId: 10 },
+        });
+
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error.code).toBe("validation_error");
+        expect(mocks.transferCharactersIfCanonEmpty).not.toHaveBeenCalled();
+        expect(mocks.mergeGroup).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      { desc: "null", body: null },
+      { desc: "пустой объект", body: {} },
+      { desc: "нечисловой targetId", body: { targetId: "10" } },
+      { desc: "targetId = 0", body: { targetId: 0 } },
+    ])(
+      "POST /:id/merge → 400 при невалидном теле ($desc)",
+      async ({ body }) => {
+        const res = await app.inject({
+          method: "POST",
+          url: "/api/admin/books/20/merge",
+          headers: {
+            authorization: "Bearer admin-token",
+            "content-type": "application/json",
+          },
+          payload: JSON.stringify(body),
+        });
+
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error.code).toBe("validation_error");
+        expect(mocks.transferCharactersIfCanonEmpty).not.toHaveBeenCalled();
+        expect(mocks.mergeGroup).not.toHaveBeenCalled();
+      },
+    );
+
+    it("POST /:id/merge вызывает transferCharactersIfCanonEmpty(20, 10) ДО mergeGroup", async () => {
+      const callOrder: string[] = [];
+      mocks.transferCharactersIfCanonEmpty.mockImplementation(async () => {
+        callOrder.push("transferCharactersIfCanonEmpty");
+      });
+      mocks.mergeGroup.mockImplementation(async () => {
+        callOrder.push("mergeGroup");
+        return undefined;
+      });
+      mocks.prisma.book.findUnique
+        .mockResolvedValueOnce({ ...bookRow, id: 20 })
+        .mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.prisma.book.findUniqueOrThrow.mockResolvedValue({
+        id: 20,
+        title: "Анна Каренина",
+        authorId: 1,
+        coverImageUrl: "",
+        description: null,
+        publishedAt: null,
+        status: "draft",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        _count: { placements: 0, ratings: 0, statuses: 0, collectionBooks: 0, celebrityBooks: 0, comments: 0, likes: 0 },
+      });
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/20/merge",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { targetId: 10 },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(mocks.transferCharactersIfCanonEmpty).toHaveBeenCalledWith(20, 10);
+      expect(callOrder).toEqual(["transferCharactersIfCanonEmpty", "mergeGroup"]);
+    });
+
+    it("PUT /:id/characters → 200 при валидном списке", async () => {
+      const saved = [
+        {
+          id: 5,
+          characterId: 50,
+          slug: "dante",
+          name: "Данте",
+          aliases: ["Поэт"],
+          universeSlug: null,
+          role: "protagonist",
+          summary: "Странник, проходящий через круги Ада.",
+          traits: ["созерцательность"],
+          relations: [],
+          otherBooks: [],
+        },
+      ];
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ id: 10 });
+      mocks.replaceBookCharacters.mockResolvedValueOnce(saved);
+
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/admin/books/10/characters",
+        headers: { authorization: "Bearer admin-token" },
+        payload: {
+          items: [
+            {
+              name: "Данте",
+              aliases: ["Поэт"],
+              role: "главный герой",
+              summary: "Странник, проходящий через круги Ада.",
+              traits: ["созерцательность"],
+            },
+          ],
+        },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ data: { characters: saved } });
+      expect(mocks.replaceBookCharacters).toHaveBeenCalledWith(
+        10,
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "Данте",
+            role: "protagonist",
+            aliases: ["Поэт"],
+          }),
+        ]),
+      );
+    });
+
+    it("PUT /:id/characters → 404 если книги нет", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce(null);
+
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/admin/books/999/characters",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { items: [] },
+      });
+
+      expect(res.statusCode).toBe(404);
+      expect(mocks.replaceBookCharacters).not.toHaveBeenCalled();
+    });
+
+    it("PUT /:id/characters → 400 при невалидном теле", async () => {
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/admin/books/10/characters",
+        headers: { authorization: "Bearer admin-token" },
+        payload: {
+          items: [
+            {
+              name: "",
+              role: "protagonist",
+              summary: "коротко",
+            },
+          ],
+        },
+      });
+
+      expect(res.statusCode).toBe(400);
+      expect(mocks.replaceBookCharacters).not.toHaveBeenCalled();
+    });
+
+    it.each(["abc", "0", "-1", "1.5"])(
+      "PUT /:id/characters → 400 при некорректном id (%s)",
+      async (badId) => {
+        const res = await app.inject({
+          method: "PUT",
+          url: `/api/admin/books/${badId}/characters`,
+          headers: { authorization: "Bearer admin-token" },
+          payload: { items: [] },
+        });
+
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error.code).toBe("validation_error");
+        expect(mocks.replaceBookCharacters).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      { desc: "null", body: null },
+      { desc: "пустой объект {}", body: {} },
+      { desc: "строка вместо объекта", body: "str" },
+    ])(
+      "PUT /:id/characters → 400 при некорректном теле ($desc)",
+      async ({ body }) => {
+        const res = await app.inject({
+          method: "PUT",
+          url: "/api/admin/books/10/characters",
+          headers: {
+            authorization: "Bearer admin-token",
+            "content-type": "application/json",
+          },
+          payload: JSON.stringify(body),
+        });
+
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error.code).toBe("validation_error");
+        expect(res.json().error.details).toBeDefined();
+        expect(mocks.replaceBookCharacters).not.toHaveBeenCalled();
+      },
+    );
   });
 });

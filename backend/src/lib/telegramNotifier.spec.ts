@@ -27,7 +27,7 @@ describe("telegramNotifier", () => {
         username: "testuser",
         userEmail: "test@example.com",
         userId: 42,
-        rating: "great",
+        rating: 5,
         message: "Отличный сайт <3 & крутые фичи",
         pageUrl: "/rankings",
       });
@@ -36,18 +36,18 @@ describe("telegramNotifier", () => {
       expect(html).toContain("@testuser");
       expect(html).toContain("test@example.com");
       expect(html).toContain("ID: 42");
-      expect(html).toContain("😍 Всё отлично");
+      expect(html).toContain("😍 5 — Отлично");
       expect(html).toContain("&lt;3 &amp; крутые фичи");
       expect(html).toContain("/rankings");
     });
 
     it("handles missing optional fields gracefully", () => {
       const html = formatFeedbackHtml({
-        rating: "neutral",
+        rating: 3,
       });
 
       expect(html).toContain("Гость");
-      expect(html).toContain("🤔 Есть вопросы / идеи");
+      expect(html).toContain("😐 3 — Нормально");
       expect(html).toContain("<i>Без комментария</i>");
     });
   });
@@ -63,7 +63,7 @@ describe("telegramNotifier", () => {
       cfg.TELEGRAM_CHAT_ID = "";
 
       const result = await sendTelegramFeedbackNotification({
-        rating: "great",
+        rating: 5,
         message: "Тест",
       });
 
@@ -88,7 +88,7 @@ describe("telegramNotifier", () => {
 
       const result = await sendTelegramFeedbackNotification({
         username: "booklover",
-        rating: "great",
+        rating: 5,
         message: "Супер!",
       });
 
@@ -116,7 +116,7 @@ describe("telegramNotifier", () => {
       cfg.TELEGRAM_CHAT_ID = "123";
 
       const result = await sendTelegramFeedbackNotification({
-        rating: "bad",
+        rating: 1,
       });
 
       expect(result).toBe(false);

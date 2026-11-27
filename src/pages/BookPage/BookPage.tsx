@@ -32,6 +32,7 @@ import { BookCover3D } from "./BookCover3D";
 import { BookRatingPanel } from "./BookRatingPanel";
 import { BookContextChain } from "./BookContextChain";
 import { BookReadingGuide } from "./BookReadingGuide";
+import { BookCharacters } from "./BookCharacters";
 import { BookMatch, BookMatchBadge } from "@/features/book-match/components";
 // import { ContentLock } from "./ContentLock"; // отключено для открытого доступа к страницам книг
 import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
@@ -121,6 +122,7 @@ export default function BookPage() {
     similarBooks,
     otherBooksByAuthor,
     comments,
+    characters = [],
   } = data;
   const rating = book.rating;
   const contextChain = book.contextChain ?? [];
@@ -175,6 +177,7 @@ export default function BookPage() {
     ...book,
     url: `${SITE_URL}/books/${canonicalSlug}`,
     comments: comments.items,
+    characters,
   });
 
   // Статус книги в «Моей полке» (want_to_read / read / null)
@@ -615,7 +618,7 @@ export default function BookPage() {
                       e.preventDefault();
                       document.getElementById("discussion")?.scrollIntoView({ behavior: "smooth" });
                     }}
-                    className="mt-4 mb-6 flex items-center justify-between p-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors group"
+                    className={`mt-4 ${characters.length > 0 ? "mb-3" : "mb-6"} flex items-center justify-between p-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors group`}
                   >
                     <div className="flex items-center gap-2.5">
                       <Icon name="comment" className="text-primary text-base" />
@@ -627,6 +630,25 @@ export default function BookPage() {
                     </div>
 
                   </a>
+
+                  {/* Быстрый переход к ключевым героям */}
+                  {characters.length > 0 && (
+                    <a
+                      href="#characters"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById("characters")?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="mb-6 flex items-center justify-between p-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--bp-primary)"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Icon name="groups" className="text-primary text-base" />
+                        <span className="text-xs text-white/90 font-medium group-hover:text-primary transition-colors">
+                          Ключевые герои ({characters.length})
+                        </span>
+                      </div>
+                    </a>
+                  )}
 
                   {/* «Где читать» — аффилиат-ссылки на Читай Город и ЛитРес */}
                   {affiliateLinks.length > 0 && (
@@ -697,6 +719,9 @@ export default function BookPage() {
 
         {/* ── Гид по чтению (AI-паспорт) ── */}
         {book.readingGuide && <BookReadingGuide guide={book.readingGuide} />}
+
+        {/* ── Ключевые герои ── */}
+        <BookCharacters key={book.id} characters={characters} />
 
         {/* ── Book Match — совместимость читателя и книги ── */}
         {book.readingProfile && (

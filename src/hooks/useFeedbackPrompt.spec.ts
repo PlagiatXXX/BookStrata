@@ -155,20 +155,20 @@ describe("useFeedbackPrompt", () => {
     });
 
     await act(async () => {
-      await result.current.handleSubmit({ rating: "great", message: "Отличный сайт!" });
+      await result.current.handleSubmit({ rating: 5, message: "Отличный сайт!" });
     });
 
     expect(feedbackApi.sendFeedback).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "survey",
-        rating: "great",
+        rating: 5,
         message: "Отличный сайт!",
       })
     );
     expect(localStorage.getItem(STORAGE_KEY)).toContain('"status":"submitted"');
     expect(analyticsApi.apiTrackEvent).toHaveBeenCalledWith(
       "feedback.prompt_submitted",
-      expect.objectContaining({ rating: "great", hasMessage: true })
+      expect.objectContaining({ rating: 5, hasMessage: true })
     );
   });
 });

@@ -3,7 +3,7 @@ import { apiClient } from "./api-client";
 export interface FeedbackInput {
   type: "bug" | "feature" | "other" | "survey";
   message?: string;
-  rating?: "great" | "neutral" | "bad";
+  rating?: number;
   pageUrl?: string;
   userEmail?: string;
 }

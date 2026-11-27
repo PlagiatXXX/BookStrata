@@ -33,6 +33,13 @@ import { createBookWithSlug } from "../../lib/slug.js";
 import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
 import { ValidationError } from "../../lib/errors.js";
 import { validateRemoteImageDimensions } from "../../lib/validators.js";
+import {
+  getBookCharactersView,
+  replaceBookCharacters,
+  transferCharactersIfCanonEmpty,
+  type BookCharacterView,
+} from "../characters/characters.service.js";
+import type { BookCharacterInput } from "../characters/characters.schema.js";
 
 const authorService = createAuthorService(prisma);
 
@@ -471,9 +478,9 @@ export async function listBooks(params: BookListParams) {
   };
 }
 
-/** Полная книга для редактора (contextChain, история slug). */
+/** Полная книга для редактора (contextChain, история slug, персонажи). */
 export async function getBookAdmin(id: number) {
-  return prisma.book.findUnique({
+  const book = await prisma.book.findUnique({
     where: { id },
     select: {
       id: true,
@@ -506,6 +513,26 @@ export async function getBookAdmin(id: number) {
       authorRel: { select: { name: true } },
     },
   });
+  if (!book) {
+    return null;
+  }
+  const characters = await getBookCharactersView(id);
+  return { ...book, characters };
+}
+
+/** Заменяет список персонажей книги после проверки её существования. */
+export async function updateBookCharactersAdmin(
+  id: number,
+  items: BookCharacterInput[],
+): Promise<BookCharacterView[]> {
+  const book = await prisma.book.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+  if (!book) {
+    throw new AdminBookError("Книга не найдена", "book_not_found");
+  }
+  return replaceBookCharacters(id, items);
 }
 
 export interface BookUpdateInput {
@@ -1030,6 +1057,9 @@ export async function mergeBooksByIds(dupId: number, canonId: number) {
     dup.readingGuide !== undefined
       ? (dup.readingGuide as Prisma.InputJsonValue)
       : undefined;
+
+  // Перенос персонажей ДО mergeGroup, так как mergeGroup может удалить дубль.
+  await transferCharactersIfCanonEmpty(dupId, canonId);
 
   // Выбор канона из админки имеет приоритет: mergeGroup не перевыбирает
   // его через pickCanon (баг: склейка «Ртути» поглотила published-книгу

@@ -5,6 +5,10 @@ import { normTitleForSql } from "../tier-lists/tierList.books.service.js";
 import type { ReadingGuide } from "./readingGuide.schema.js";
 import type { ReadingProfile } from "./readingProfile.schema.js";
 import { formatBookComment, type FormattedBookComment } from "./bookComment.service.js";
+import {
+  getBookCharactersView,
+  type BookCharacterView,
+} from "../characters/characters.service.js";
 
 /** Компактная выборка книги для карточек (similarBooks / otherBooksByAuthor) */
 const bookCardSelect = {
@@ -56,6 +60,7 @@ export interface BookPageData {
   similarBooks: unknown[];
   otherBooksByAuthor: unknown[];
   comments: { items: BookPageComment[]; total: number };
+  characters: BookCharacterView[];
   userLike: boolean;
 }
 
@@ -175,6 +180,7 @@ export async function getBookPageData(
     otherBooksByAuthor,
     comments,
     commentsTotal,
+    characters,
     userLike,
   ] = await Promise.all([
     // Тир-листы матчатся по НОРМАЛИЗОВАННЫМ (title, author), а не по bookId
@@ -262,6 +268,7 @@ export async function getBookPageData(
       },
     }),
     prisma.bookComment.count({ where: { bookId: id, deletedAt: null } }),
+    getBookCharactersView(id),
     userId
       ? prisma.bookLike.findUnique({
           where: { bookId_userId: { bookId: id, userId } },
@@ -298,6 +305,7 @@ export async function getBookPageData(
     similarBooks,
     otherBooksByAuthor,
     comments: { items: comments.map(formatBookComment), total: commentsTotal },
+    characters,
     userLike: Boolean(userLike),
   };
 }

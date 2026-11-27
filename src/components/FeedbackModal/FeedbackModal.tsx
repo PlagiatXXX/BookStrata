@@ -7,26 +7,36 @@ import { apiTrackEvent } from "@/lib/analyticsApi";
 export interface FeedbackModalProps {
   isOpen: boolean;
   onDismiss: () => void;
-  onSubmit: (input: { rating: "great" | "neutral" | "bad"; message?: string }) => Promise<void>;
+  onSubmit: (input: { rating: number; message?: string }) => Promise<void>;
 }
 
 type Step = "rating" | "details" | "success";
-type RatingValue = "great" | "neutral" | "bad";
+type RatingValue = number;
 
 const TELEGRAM_URL = "https://t.me/bookstrata";
 const VK_URL = "https://vk.ru/club237287277";
 
-const RATINGS: { value: RatingValue; emoji: string; label: string; desc: string }[] = [
-  { value: "great", emoji: "😍", label: "Всё отлично", desc: "Удобно и понятно" },
-  { value: "neutral", emoji: "🤔", label: "Есть вопросы / идеи", desc: "Чего-то не хватает" },
-  { value: "bad", emoji: "🙁", label: "Неудобно / сложно", desc: "Трудно разобраться" },
+const RATING_LABELS: { emoji: string; text: string }[] = [
+  { emoji: "⭐", text: "Оцените" },
+  { emoji: "🙁", text: "Плохо" },
+  { emoji: "😕", text: "Не очень" },
+  { emoji: "😐", text: "Нормально" },
+  { emoji: "🙂", text: "Хорошо" },
+  { emoji: "😍", text: "Отлично" },
 ];
+
+function starAriaLabel(n: number): string {
+  if (n === 1) return "1 звезда";
+  if (n >= 2 && n <= 4) return `${n} звезды`;
+  return `${n} звёзд`;
+}
 
 export function FeedbackModal({ isOpen, onDismiss, onSubmit }: FeedbackModalProps) {
   useBodyScrollLock(isOpen);
 
   const [step, setStep] = useState<Step>("rating");
-  const [selectedRating, setSelectedRating] = useState<RatingValue | null>(null);
+  const [selectedRating, setSelectedRating] = useState<RatingValue>(0);
+  const [hoverRating, setHoverRating] = useState<number>(0);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -38,17 +48,18 @@ export function FeedbackModal({ isOpen, onDismiss, onSubmit }: FeedbackModalProp
   useEffect(() => {
     if (isOpen) {
       setStep("rating");
-      setSelectedRating(null);
+      setSelectedRating(0);
+      setHoverRating(0);
       setMessage("");
       setIsSubmitting(false);
       setSubmitError(null);
     }
   }, [isOpen]);
 
-  // Закрытие только по нажатию на крестик — клик мимо и Escape отключены для исключения случайных закрытий
+  const displayRating = hoverRating || selectedRating;
+  const displayLabel = RATING_LABELS[displayRating];
 
-
-  const handleSelectRating = (rating: RatingValue) => {
+  const handleSelectRating = (rating: number) => {
     setSelectedRating(rating);
     setStep("details");
     apiTrackEvent("feedback.rating_selected", { rating });
@@ -75,11 +86,16 @@ export function FeedbackModal({ isOpen, onDismiss, onSubmit }: FeedbackModalProp
   };
 
   const getDetailsPrompt = useCallback(() => {
-    if (selectedRating === "great") {
+    if (selectedRating >= 4) {
       return "Что вам больше всего нравится на сайте?";
     }
-    return "Чего вам не хватило или что вызвало трудности?";
+    if (selectedRating <= 2) {
+      return "Чего вам не хватило или что вызвало трудности?";
+    }
+    return "Что можно улучшить?";
   }, [selectedRating]);
+
+  const selectedLabel = RATING_LABELS[selectedRating];
 
   return (
     <AnimatePresence>
@@ -98,7 +114,7 @@ export function FeedbackModal({ isOpen, onDismiss, onSubmit }: FeedbackModalProp
           {/* Атмосферный ореол дымки сзади */}
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(193,255,254,0.08)_0%,transparent_65%)]" />
 
-          {/* Карточка: появление из дыма и растворение */}
+          {/* Карточка */}
           <motion.div
             className="relative w-full max-w-md rounded-2xl border border-amber-200/20 bg-[#121214] p-6 text-[#f3efe6] shadow-[0_0_60px_rgba(0,0,0,0.85)] backdrop-blur-xl max-h-[90dvh] overflow-y-auto"
             initial={{ opacity: 0, filter: "blur(24px)", scale: 0.94 }}
@@ -117,7 +133,7 @@ export function FeedbackModal({ isOpen, onDismiss, onSubmit }: FeedbackModalProp
               <X size={16} />
             </button>
 
-            {/* ШАГ 1: ВЫБОР РЕАКЦИИ */}
+            {/* ШАГ 1: ВЫБОР ОЦЕНКИ */}
             {step === "rating" && (
               <div className="space-y-5">
                 <div>
@@ -125,27 +141,65 @@ export function FeedbackModal({ isOpen, onDismiss, onSubmit }: FeedbackModalProp
                     Помогите нам стать лучше
                   </h3>
                   <p id={descId} className="mt-1 text-xs text-gray-400">
-                    Как вам BookStrata? Поделитесь первым впечатлением в один клик:
+                    Какое впечатление от работы сайта?
                   </p>
                 </div>
 
-                <div className="space-y-2.5">
-                  {RATINGS.map((item) => (
-                    <button
-                      key={item.value}
-                      type="button"
-                      onClick={() => handleSelectRating(item.value)}
-                      className="group flex w-full items-center gap-3.5 rounded-xl border border-white/10 bg-white/[0.03] p-3.5 text-left transition-all hover:border-amber-200/40 hover:bg-white/[0.08] hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
-                    >
-                      <span className="text-2xl transition-transform group-hover:scale-110">
-                        {item.emoji}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-white">{item.label}</div>
-                        <div className="text-xs text-gray-400">{item.desc}</div>
-                      </div>
-                    </button>
-                  ))}
+                <div
+                  className="flex flex-col items-center gap-3"
+                  onPointerLeave={() => setHoverRating(0)}
+                >
+                  <div className="flex justify-center gap-2" role="radiogroup" aria-label="Оценка от 1 до 5">
+                    {[1, 2, 3, 4, 5].map((n) => {
+                      const lit = n <= displayRating;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          role="radio"
+                          aria-checked={n === selectedRating}
+                          aria-label={starAriaLabel(n)}
+                          onPointerEnter={() => setHoverRating(n)}
+                          onClick={() => handleSelectRating(n)}
+                          className="group cursor-pointer p-1"
+                        >
+                          <motion.svg
+                            viewBox="0 0 24 24"
+                            className="h-9 w-9"
+                            initial={false}
+                            animate={lit ? { scale: [0.7, 1] } : { scale: 1 }}
+                            transition={
+                              lit
+                                ? { type: "spring", stiffness: 520, damping: 16, delay: (n - 1) * 0.05 }
+                                : { duration: 0.15 }
+                            }
+                          >
+                            <motion.path
+                              d="M12 3.2l2.6 5.5 6 .8-4.4 4.1 1.1 5.9L12 16.6l-5.3 2.9 1.1-5.9-4.4-4.1 6-.8z"
+                              animate={{ fill: lit ? "#ffd23f" : "rgba(255,255,255,0.14)" }}
+                              transition={{ duration: 0.2, delay: lit ? (n - 1) * 0.05 : 0 }}
+                            />
+                          </motion.svg>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex h-10 items-center justify-center">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={displayRating}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="text-2xl">{displayLabel.emoji}</span>
+                        <span className="text-sm font-medium text-white/80">{displayLabel.text}</span>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
                 </div>
 
                 {/* Блок сообщества */}
@@ -190,8 +244,7 @@ export function FeedbackModal({ isOpen, onDismiss, onSubmit }: FeedbackModalProp
                     <ArrowLeft size={14} />
                   </button>
                   <span className="text-xs text-amber-200/80 font-medium">
-                    {RATINGS.find((r) => r.value === selectedRating)?.emoji}{" "}
-                    {RATINGS.find((r) => r.value === selectedRating)?.label}
+                    {selectedLabel.emoji} {selectedLabel.text}
                   </span>
                 </div>
 

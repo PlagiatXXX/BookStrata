@@ -188,6 +188,54 @@ describe("BookPage", () => {
     expect(screen.getByText("Великие романы")).toBeTruthy();
     expect(screen.getByText("Стивен Кинг")).toBeTruthy();
     expect(screen.getByText("Обсуждение")).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Ключевые герои" })).toBeNull();
+  });
+
+  it("при наличии characters рендерит блок «Ключевые герои» и якорную ссылку в сайдбаре", async () => {
+    mockedUseBook.mockReturnValue({
+      data: {
+        ...bookPageData,
+        characters: [
+          {
+            id: 1,
+            characterId: 11,
+            slug: "jay-gatsby",
+            name: "Джей Гэтсби",
+            aliases: ["Джеймс Гэтц"],
+            universeSlug: null,
+            role: "protagonist",
+            summary: "Загадочный миллионер, устраивающий пышные вечеринки.",
+            traits: ["Мечтатель", "Романтик"],
+            relations: [],
+            otherBooks: [],
+          },
+          {
+            id: 2,
+            characterId: 12,
+            slug: "nick-carraway",
+            name: "Ник Каррауэй",
+            aliases: [],
+            universeSlug: null,
+            role: "supporting",
+            summary: "Рассказчик истории.",
+            traits: [],
+            relations: [],
+            otherBooks: [],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Ключевые герои" })).toBeInTheDocument();
+    });
+    expect(screen.getByText("Джей Гэтсби")).toBeInTheDocument();
+    const anchor = screen.getByRole("link", { name: /Ключевые герои \(2\)/i });
+    expect(anchor).toHaveAttribute("href", "#characters");
   });
 
   it("рендерит плашку возрастного ценза 18+ в мета-строке и флажок на обложке", async () => {

@@ -21,15 +21,14 @@ describe("FeedbackModal", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders Step 1 with emoji buttons and social links when isOpen is true", () => {
+  it("renders Step 1 with 5 stars and social links when isOpen is true", () => {
     render(
       <FeedbackModal isOpen={true} onDismiss={onDismiss} onSubmit={onSubmit} />
     );
 
     expect(screen.getByText("Помогите нам стать лучше")).toBeInTheDocument();
-    expect(screen.getByText("Всё отлично")).toBeInTheDocument();
-    expect(screen.getByText("Есть вопросы / идеи")).toBeInTheDocument();
-    expect(screen.getByText("Неудобно / сложно")).toBeInTheDocument();
+    expect(screen.getByText("Какое впечатление от работы сайта?")).toBeInTheDocument();
+    expect(screen.getAllByRole("radio")).toHaveLength(5);
 
     expect(screen.getByRole("link", { name: /Telegram/i })).toHaveAttribute(
       "href",
@@ -41,12 +40,12 @@ describe("FeedbackModal", () => {
     );
   });
 
-  it("transitions to Step 2 when an emoji button is clicked", () => {
+  it("transitions to Step 2 when a star is clicked", () => {
     render(
       <FeedbackModal isOpen={true} onDismiss={onDismiss} onSubmit={onSubmit} />
     );
 
-    fireEvent.click(screen.getByText("Всё отлично"));
+    fireEvent.click(screen.getByRole("radio", { name: /5/ }));
 
     expect(
       screen.getByText("Что вам больше всего нравится на сайте?")
@@ -60,7 +59,7 @@ describe("FeedbackModal", () => {
       <FeedbackModal isOpen={true} onDismiss={onDismiss} onSubmit={onSubmit} />
     );
 
-    fireEvent.click(screen.getByText("Всё отлично"));
+    fireEvent.click(screen.getByRole("radio", { name: /5/ }));
 
     const textarea = screen.getByPlaceholderText(/Напишите пару слов/i);
     fireEvent.change(textarea, { target: { value: "Супер интерфейс" } });
@@ -69,7 +68,7 @@ describe("FeedbackModal", () => {
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith({
-        rating: "great",
+        rating: 5,
         message: "Супер интерфейс",
       });
     });
@@ -82,16 +81,13 @@ describe("FeedbackModal", () => {
       <FeedbackModal isOpen={true} onDismiss={onDismiss} onSubmit={onSubmit} />
     );
 
-    // Клик по оверлею не должен закрывать
     const dialog = screen.getByRole("dialog");
     fireEvent.click(dialog);
     expect(onDismiss).not.toHaveBeenCalled();
 
-    // Нажатие Escape не должно закрывать
     fireEvent.keyDown(window, { key: "Escape" });
     expect(onDismiss).not.toHaveBeenCalled();
 
-    // Закрытие только по кнопке крестика
     const closeBtn = screen.getByLabelText("Закрыть");
     fireEvent.click(closeBtn);
     expect(onDismiss).toHaveBeenCalledTimes(1);

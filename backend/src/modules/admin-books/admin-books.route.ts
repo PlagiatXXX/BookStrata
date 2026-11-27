@@ -1,6 +1,7 @@
 // backend/src/modules/admin-books/admin-books.route.ts
 // Админка каталога книг (Фаза 7, seobook.md). Все роуты — только admin.
 import type { FastifyPluginAsync } from "fastify";
+import { z, ZodError } from "zod";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { uploadBase64WithOg } from "../../lib/upload.js";
@@ -20,9 +21,11 @@ import {
   updateCommentAdmin,
   deleteCommentAdmin,
   createBookAdmin,
+  updateBookCharactersAdmin,
   type BookUpdateInput,
   type BookCreateInput,
 } from "./admin-books.service.js";
+import { bookCharactersListSchema } from "../characters/characters.schema.js";
 import {
   processAndUploadAnimatedCover,
   VideoProcessingError,
@@ -30,6 +33,19 @@ import {
   type VideoProcessingMode,
   type VideoAspectRatio,
 } from "./video-processor.service.js";
+
+const putBookCharactersBodySchema = z.object({
+  items: bookCharactersListSchema,
+});
+
+const mergeBookBodySchema = z.object({
+  targetId: z.number().int().positive(),
+});
+
+function parsePositiveIntId(raw: string): number | null {
+  const num = Number(raw);
+  return Number.isInteger(num) && num > 0 ? num : null;
+}
 
 const handleError = (error: unknown, reply: {
   code: (code: number) => { send: (payload: unknown) => unknown };
@@ -51,10 +67,14 @@ const handleError = (error: unknown, reply: {
       createApiError(error.code as ErrorCode, error.message),
     );
   }
-  // ZodError от readingGuideSchema.parse / readingProfileSchema.parse
-  if (error instanceof Error && error.name === "ZodError") {
+  // ZodError от readingGuideSchema / readingProfileSchema / bookCharactersListSchema / mergeBookBodySchema
+  if (error instanceof ZodError) {
     return reply.code(400).send(
-      createApiError(ErrorCodes.VALIDATION_ERROR, "Невалидная структура readingGuide или readingProfile"),
+      createApiError(
+        ErrorCodes.VALIDATION_ERROR,
+        error.issues[0]?.message ?? "Невалидная структура данных книги",
+        error.issues,
+      ),
     );
   }
   throw error;
@@ -152,7 +172,13 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /api/admin/books/:id — полная книга
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    const book = await getBookAdmin(Number(request.params.id));
+    const bookId = parsePositiveIntId(request.params.id);
+    if (bookId === null) {
+      return reply
+        .code(400)
+        .send(createApiError(ErrorCodes.VALIDATION_ERROR, "Некорректный ID книги"));
+    }
+    const book = await getBookAdmin(bookId);
     if (!book) {
       return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Книга не найдена"));
     }
@@ -166,6 +192,26 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
       try {
         const book = await updateBookAdmin(Number(request.params.id), request.body);
         return reply.send(createSuccessResponse(book));
+      } catch (error) {
+        return handleError(error, reply);
+      }
+    },
+  );
+
+  // PUT /api/admin/books/:id/characters — полная замена персонажей книги
+  fastify.put<{ Params: { id: string }; Body: unknown }>(
+    "/:id/characters",
+    async (request, reply) => {
+      const bookId = parsePositiveIntId(request.params.id);
+      if (bookId === null) {
+        return reply
+          .code(400)
+          .send(createApiError(ErrorCodes.VALIDATION_ERROR, "Некорректный ID книги"));
+      }
+      try {
+        const { items } = putBookCharactersBodySchema.parse(request.body);
+        const saved = await updateBookCharactersAdmin(bookId, items);
+        return reply.send(createSuccessResponse({ characters: saved }));
       } catch (error) {
         return handleError(error, reply);
       }
@@ -287,11 +333,18 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /api/admin/books/:id/merge — ручной merge { targetId } — канон
-  fastify.post<{ Params: { id: string }; Body: { targetId: number } }>(
+  fastify.post<{ Params: { id: string }; Body: unknown }>(
     "/:id/merge",
     async (request, reply) => {
+      const bookId = parsePositiveIntId(request.params.id);
+      if (bookId === null) {
+        return reply
+          .code(400)
+          .send(createApiError(ErrorCodes.VALIDATION_ERROR, "Некорректный ID книги"));
+      }
       try {
-        const canon = await mergeBooksByIds(Number(request.params.id), Number(request.body.targetId));
+        const { targetId } = mergeBookBodySchema.parse(request.body);
+        const canon = await mergeBooksByIds(bookId, targetId);
         return reply.send(createSuccessResponse(canon));
       } catch (error) {
         return handleError(error, reply);

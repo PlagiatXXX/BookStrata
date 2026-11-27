@@ -10,6 +10,7 @@ import {
   listAdminBooks,
   getAdminBook,
   updateAdminBook,
+  replaceAdminBookCharacters,
   publishAdminBook,
   unpublishAdminBook,
   enrichAdminBook,
@@ -18,6 +19,7 @@ import {
   updateAdminComment,
   deleteAdminComment,
   createAdminBook,
+  type BookCharacterInput,
   type BookUpdateInput,
 } from "@/lib/adminBooksApi";
 
@@ -73,8 +75,26 @@ export function useAdminBooks() {
   };
 
   const saveMutation = useMutation({
-    mutationFn: ({ id, patch }: { id: number; patch: BookUpdateInput }) =>
-      updateAdminBook(id, patch),
+    mutationFn: async ({
+      id,
+      patch,
+      characters,
+    }: {
+      id: number;
+      patch: BookUpdateInput;
+      characters?: BookCharacterInput[];
+    }) => {
+      const updated = await updateAdminBook(id, patch);
+      if (characters !== undefined) {
+        try {
+          await replaceAdminBookCharacters(id, characters);
+        } catch (err) {
+          invalidateLists();
+          throw err;
+        }
+      }
+      return updated;
+    },
     onSuccess: () => {
       invalidateLists();
       sileo.success({ title: "Изменения сохранены" });

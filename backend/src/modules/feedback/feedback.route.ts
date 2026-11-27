@@ -30,7 +30,7 @@ export async function feedbackRoutes(fastify: FastifyInstance) {
           required: ["type"],
           properties: {
             type: { type: "string", enum: [...FEEDBACK_TYPES] },
-            rating: { type: "string", enum: ["great", "neutral", "bad"] },
+            rating: { type: "integer", minimum: 1, maximum: 5 },
             message: { type: "string", maxLength: 5000 },
             pageUrl: { type: "string", maxLength: 1000 },
             userEmail: { type: "string", maxLength: 255 },
@@ -42,7 +42,7 @@ export async function feedbackRoutes(fastify: FastifyInstance) {
       const { type, message, rating, pageUrl, userEmail } = request.body as {
         type: string;
         message?: string;
-        rating?: string;
+        rating?: number;
         pageUrl?: string;
         userEmail?: string;
       };

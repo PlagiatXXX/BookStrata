@@ -120,8 +120,18 @@ export function buildBookJsonLd(book: {
   url: string;
   /** Комментарии / мысли читателей для микроразметки Schema.org Comment */
   comments?: BookComment[] | null;
+  /** Ключевые персонажи книги для микроразметки Schema.org Person */
+  characters?: Array<{ name: string }> | null;
 }): Record<string, unknown> {
   const guide = book.readingGuide ?? null;
+
+  const validChars = Array.from(
+    new Set(
+      (book.characters ?? [])
+        .map((c) => c.name?.trim())
+        .filter((name): name is string => Boolean(name)),
+    ),
+  );
 
   const activeComments = (book.comments ?? [])
     .filter((c) => !c.isDeleted && c.content?.trim())
@@ -173,5 +183,8 @@ export function buildBookJsonLd(book: {
     url: book.url,
     mainEntityOfPage: { "@type": "WebPage", "@id": book.url },
     ...(jsonLdComments ? { comment: jsonLdComments } : {}),
+    ...(validChars.length > 0
+      ? { character: validChars.map((name) => ({ "@type": "Person", name })) }
+      : {}),
   };
 }

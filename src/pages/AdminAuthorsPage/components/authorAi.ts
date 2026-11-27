@@ -2,6 +2,8 @@
 // Генератор промпта для ИИ (заполнение ручных полей автора) и парсер ответа.
 // Зеркалит лимиты authorContentInputSchema на бэке (Zod max).
 
+import { parseAiJson } from "@/utils/aiJson";
+
 export const AUTHOR_AI_LIMITS = {
   badge: 200,
   motto: 500,
@@ -66,13 +68,6 @@ export function buildAuthorAiPrompt(authorName: string): string {
 }`;
 }
 
-/** Срезает markdown-обёртку ```json ... ``` из ответа ИИ */
-function stripMarkdownFence(raw: string): string {
-  const cleaned = raw.trim();
-  if (!cleaned.startsWith("```")) return cleaned;
-  return cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
-}
-
 const clamp = (v: string, max: number) => v.slice(0, max);
 
 /**
@@ -82,7 +77,7 @@ const clamp = (v: string, max: number) => v.slice(0, max);
 export function parseAuthorAiResponse(raw: string): AuthorAiFill {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(stripMarkdownFence(raw));
+    parsed = parseAiJson(raw);
   } catch {
     throw new Error("Ответ ИИ не является валидным JSON — скопируйте ответ целиком");
   }
