@@ -154,4 +154,82 @@ describe("useTierEditorSave", () => {
     expect(tierListApi.saveTierListAtomic).toHaveBeenCalledTimes(1);
     expect(onFirstSaveSuccess).not.toHaveBeenCalled();
   });
+
+  it("сбрасывает deletedBookIds после успешного сохранения", async () => {
+    vi.mocked(tierListApi.saveTierListAtomic).mockResolvedValueOnce({
+      bookReplacements: [],
+      tierReplacements: [],
+    });
+
+    const listWithDeleted: TierListData = {
+      ...initialListData,
+      id: "101",
+      deletedBookIds: [777],
+    };
+
+    const { result } = renderHook(
+      () =>
+        useTierEditorSave({
+          tierListId: "101",
+          listData: listWithDeleted,
+          dispatch: mockDispatch,
+          isLoading: false,
+          isReadOnly: false,
+          setHasUnsavedChanges: mockSetHasUnsavedChanges,
+          logger: mockLogger as any,
+        }),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    expect(mockDispatch).toHaveBeenCalledWith({ type: "CLEAR_DELETED_BOOK_IDS" });
+  });
+
+  it("удаляет призрачные книги из состояния при missingBookIds в ответе", async () => {
+    vi.mocked(tierListApi.saveTierListAtomic).mockResolvedValueOnce({
+      bookReplacements: [],
+      tierReplacements: [],
+      missingBookIds: [999],
+    });
+
+    const listWithGhost: TierListData = {
+      ...initialListData,
+      id: "101",
+      books: {
+        "200": { id: "200", title: "Живая", author: "A", coverImageUrl: "u" },
+        "999": { id: "999", title: "Призрак", author: "B", coverImageUrl: "u" },
+      },
+      tiers: {
+        "10": { id: "10", title: "S", color: "#fff", bookIds: ["200", "999"] },
+      },
+      tierOrder: ["10"],
+      unrankedBookIds: [],
+    };
+
+    const { result } = renderHook(
+      () =>
+        useTierEditorSave({
+          tierListId: "101",
+          listData: listWithGhost,
+          dispatch: mockDispatch,
+          isLoading: false,
+          isReadOnly: false,
+          setHasUnsavedChanges: mockSetHasUnsavedChanges,
+          logger: mockLogger as any,
+        }),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: "PRUNE_MISSING_BOOKS",
+      payload: [999],
+    });
+  });
 });

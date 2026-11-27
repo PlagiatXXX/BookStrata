@@ -408,11 +408,13 @@ export async function saveTierListAtomic(
 ): Promise<{
   bookReplacements?: { tempId: string; realId: string }[];
   tierReplacements?: { tempId: string; realId: string }[];
+  missingBookIds?: number[];
 }> {
   tierListLogger.info("Атомарное сохранение тир-листа", { tierListId: id });
   return apiClient.put<{
     bookReplacements?: { tempId: string; realId: string }[];
     tierReplacements?: { tempId: string; realId: string }[];
+    missingBookIds?: number[];
   }>(`/tier-lists/${id}/save-all`, payload);
 }
 

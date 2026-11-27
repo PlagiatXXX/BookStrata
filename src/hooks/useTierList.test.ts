@@ -505,4 +505,33 @@ describe('useTierList', () => {
       expect(result.current.listData.tierOrder).toEqual(['tier-1', 'tier-2']);
     });
   });
+
+  describe('CLEAR_DELETED_BOOK_IDS — очистка удалённых ID после сохранения', () => {
+    it('должен очищать deletedBookIds при диспатче CLEAR_DELETED_BOOK_IDS', () => {
+      const dataWithNumericBook = {
+        ...initialData,
+        books: {
+          ...initialData.books,
+          '555': {
+            id: '555',
+            title: 'Сохранённая книга',
+            author: 'Автор',
+            coverImageUrl: 'cover.jpg',
+          },
+        },
+        unrankedBookIds: ['555'],
+      };
+      const { result } = renderHook(() => useTierList(dataWithNumericBook));
+
+      act(() => {
+        result.current.deleteBook('555');
+      });
+      expect(result.current.listData.deletedBookIds).toEqual([555]);
+
+      act(() => {
+        result.current.dispatch({ type: 'CLEAR_DELETED_BOOK_IDS' });
+      });
+      expect(result.current.listData.deletedBookIds).toEqual([]);
+    });
+  });
 });

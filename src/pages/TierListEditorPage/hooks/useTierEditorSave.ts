@@ -201,6 +201,20 @@ export function useTierEditorSave({
         });
       }
 
+      if (payload.deletedBookIds.length > 0) {
+        dispatch({ type: "CLEAR_DELETED_BOOK_IDS" });
+      }
+
+      const missingIdsSet = new Set(
+        (result?.missingBookIds ?? []).map((id) => String(id)),
+      );
+      if (result?.missingBookIds?.length) {
+        dispatch({
+          type: "PRUNE_MISSING_BOOKS",
+          payload: result.missingBookIds,
+        });
+      }
+
       // Сохраняем snapshot для последующего сравнения
       savedSnapshotRef.current = serializeSnapshot(payload);
 
@@ -211,11 +225,15 @@ export function useTierEditorSave({
       });
       await queryClient.invalidateQueries({ queryKey: ["userTierLists"] });
 
+      const savedPlacementsCount = payload.placements.filter(
+        (p) => !missingIdsSet.has(String(p.bookId)),
+      ).length;
+
       logger.info("Сохранение успешно", { tierListId });
       apiTrackEvent("tierlist_save", {
         tierListId: effectiveId,
         title: titleForSave,
-        placementsCount: payload.placements.length,
+        placementsCount: savedPlacementsCount,
       });
 
       // Через 3 секунды возвращаем статус в idle

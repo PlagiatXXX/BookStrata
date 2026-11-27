@@ -44,7 +44,46 @@ export type Action =
     }
   | { type: "UPDATE_BOOK"; payload: { bookId: string; updates: Partial<Book> } }
   | { type: "REPLACE_BOOK_IDS"; payload: { tempId: string; realId: string }[] }
-  | { type: "REPLACE_TIER_IDS"; payload: { tempId: string; realId: string }[] };
+  | { type: "REPLACE_TIER_IDS"; payload: { tempId: string; realId: string }[] }
+  | { type: "CLEAR_DELETED_BOOK_IDS" }
+  | { type: "PRUNE_MISSING_BOOKS"; payload: number[] };
+
+function removeBookIdsFromContainers(
+  state: TierListData,
+  idsToRemove: Set<string>,
+): Pick<TierListData, "books" | "tiers" | "unrankedBookIds"> {
+  const newBooks = { ...state.books };
+  for (const id of idsToRemove) {
+    delete newBooks[id];
+  }
+
+  const newTiers = { ...state.tiers };
+  let tiersChanged = false;
+  Object.keys(newTiers).forEach((tierId) => {
+    const tier = newTiers[tierId];
+    if (tier.bookIds.some((id) => idsToRemove.has(id))) {
+      newTiers[tierId] = {
+        ...tier,
+        bookIds: tier.bookIds.filter((id) => !idsToRemove.has(id)),
+      };
+      tiersChanged = true;
+    }
+  });
+
+  const newUnrankedBookIds = state.unrankedBookIds.filter(
+    (id) => !idsToRemove.has(id),
+  );
+  const unrankedChanged =
+    newUnrankedBookIds.length !== state.unrankedBookIds.length;
+
+  return {
+    books: newBooks,
+    tiers: tiersChanged ? newTiers : state.tiers,
+    unrankedBookIds: unrankedChanged
+      ? newUnrankedBookIds
+      : state.unrankedBookIds,
+  };
+}
 
 const tierListReducer = (state: TierListData, action: Action): TierListData => {
   switch (action.type) {
@@ -265,27 +304,7 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
       // Оптимизация: изменяем ссылки на объекты только если книга действительно там была.
       // Это позволяет React Compiler эффективно пропускать ререндер строк, которые не изменились.
       const { bookId } = action.payload;
-      const newBooks = { ...state.books };
-      delete newBooks[bookId];
-
-      const newTiers = { ...state.tiers };
-      let tiersChanged = false;
-      Object.keys(newTiers).forEach((tierId) => {
-        const tier = newTiers[tierId];
-        if (tier.bookIds.includes(bookId)) {
-          newTiers[tierId] = {
-            ...tier,
-            bookIds: tier.bookIds.filter((id) => id !== bookId),
-          };
-          tiersChanged = true;
-        }
-      });
-
-      const newUnrankedBookIds = state.unrankedBookIds.filter(
-        (id) => id !== bookId,
-      );
-      const unrankedChanged =
-        newUnrankedBookIds.length !== state.unrankedBookIds.length;
+      const updated = removeBookIdsFromContainers(state, new Set([bookId]));
 
       const newDeletedBookIds = [...(state.deletedBookIds || [])];
       if (/^\d+$/.test(bookId)) {
@@ -294,12 +313,28 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
 
       return {
         ...state,
-        books: newBooks,
-        tiers: tiersChanged ? newTiers : state.tiers,
-        unrankedBookIds: unrankedChanged
-          ? newUnrankedBookIds
-          : state.unrankedBookIds,
+        ...updated,
         deletedBookIds: newDeletedBookIds,
+      };
+    }
+
+    case "CLEAR_DELETED_BOOK_IDS": {
+      if (!state.deletedBookIds?.length) return state;
+      return {
+        ...state,
+        deletedBookIds: [],
+      };
+    }
+
+    case "PRUNE_MISSING_BOOKS": {
+      if (action.payload.length === 0) return state;
+      const idsToRemove = new Set(action.payload.map((id) => String(id)));
+      const hasAny = Array.from(idsToRemove).some((id) => Boolean(state.books[id]));
+      if (!hasAny) return state;
+      const updated = removeBookIdsFromContainers(state, idsToRemove);
+      return {
+        ...state,
+        ...updated,
       };
     }
 
