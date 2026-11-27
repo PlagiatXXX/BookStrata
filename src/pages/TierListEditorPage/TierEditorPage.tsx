@@ -48,6 +48,7 @@ import { useDemoOnboarding } from "./hooks/useDemoOnboarding";
 import { AuthOnSaveModal } from "./components/AuthOnSaveModal";
 import { ShareSuccessModal } from "./components/ShareSuccessModal";
 import { TierListRoastModal } from "./components/TierListRoastModal";
+import { findBookElement, triggerDustDisintegrate } from "@/components/DustDelete";
 import { DemoOnboarding } from "./components/DemoOnboarding";
 import { apiTrackEvent } from "@/lib/analyticsApi";
 import { UNRANKED_AREA_ID } from "@/constants/dnd";
@@ -762,6 +763,14 @@ const TierListEditorContent = () => {
     setBookToDelete(null);
   };
 
+  const handleInstantDeleteBook = (bookId: string) => {
+    const bookEl = findBookElement(bookId);
+    if (bookEl) {
+      triggerDustDisintegrate(bookEl, { id: `book:${bookId}`, stepPx: 2 });
+    }
+    deleteBookWithUnsaved(bookId);
+  };
+
   // Пропсы для EditorHeader
   const headerProps: import("./components/EditorHeader").EditorHeaderProps = {
     title: listData.title,
@@ -1043,7 +1052,7 @@ const TierListEditorContent = () => {
             isStreamMode={isStreamMode}
             tierGridRef={tierGridRef}
             hideUnranked={fromBattle}
-            onDeleteBook={setBookToDelete}
+            onDeleteBook={handleInstantDeleteBook}
             onEditBook={(book) => setBookToEdit(book)}
             onViewBook={handleViewBook}
             activeTierId={activeTierId}

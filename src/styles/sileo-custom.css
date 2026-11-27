@@ -15,6 +15,25 @@
   text-transform: none !important;
 }
 
+/* Action-тост (Undo): быстрый показ и хорошо различимая кликабельная кнопка */
+[data-sileo-toast][data-state="action"] [data-sileo-content][data-visible="true"] {
+  transition: opacity 120ms ease 0ms !important;
+}
+
+[data-sileo-toast][data-state="action"] [data-sileo-button] {
+  position: relative;
+  z-index: 30;
+  pointer-events: auto !important;
+  color: #dbeafe !important;
+  background-color: rgba(59, 130, 246, 0.28) !important;
+  font-weight: 600 !important;
+}
+
+[data-sileo-toast][data-state="action"] [data-sileo-button]:hover {
+  color: #ffffff !important;
+  background-color: rgba(59, 130, 246, 0.48) !important;
+}
+
 /* Адаптивность для мобильных устройств */
 @media (max-width: 640px) {
   [data-sileo-viewport] {

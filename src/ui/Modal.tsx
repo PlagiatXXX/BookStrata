@@ -9,6 +9,8 @@ interface ModalProps {
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
   titleId?: string;
   className?: string;
+  /** Плавное затухание фона (например, при рассыпании модалки в пыль) */
+  isClosing?: boolean;
 }
 
 export const Modal = ({
@@ -18,6 +20,7 @@ export const Modal = ({
   maxWidth,
   titleId,
   className = "",
+  isClosing = false,
 }: ModalProps) => {
   useBodyScrollLock(isOpen)
   useEffect(() => {
@@ -45,7 +48,9 @@ export const Modal = ({
 
   return (
     <div
-      className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-none"
+      className={`fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-none transition-opacity duration-300 ${
+        isClosing ? "opacity-0 pointer-events-none" : "opacity-100"
+      }`}
       onClick={onClose}
       role="presentation"
     >

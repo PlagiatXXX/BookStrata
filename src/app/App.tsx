@@ -7,6 +7,7 @@ import { useAchievementNotifications } from "@/hooks/useAchievementNotifications
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { usePresence } from "@/hooks/usePresence";
 import { SessionExpiredOverlay } from "@/components/SessionExpiredOverlay";
+import { DustOverlay } from "@/components/DustDelete";
 const FeedbackModal = lazy(() => import("@/components/FeedbackModal").then((m) => ({ default: m.FeedbackModal })));
 const SupportWidget = lazy(() => import("@/components/SupportWidget").then((m) => ({ default: m.SupportWidget })));
 const DnaWelcomeModal = lazy(() => import("@/components/DnaWelcomeModal").then((m) => ({ default: m.DnaWelcomeModal })));
@@ -54,6 +55,7 @@ function AppShellInner() {
       </Suspense>
       <ScrollRestoration />
       <Toaster position="top-center" theme="system" />
+      <DustOverlay />
       <SessionExpiredOverlay />
       <AchievementNotification
         achievement={newAchievement}
