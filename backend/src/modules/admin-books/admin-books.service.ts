@@ -550,15 +550,20 @@ export class AdminBookError extends Error {
  * title и coverImageUrl. Slug генерируется автоматически через createBookWithSlug.
  */
 export async function createBookAdmin(data: BookCreateInput) {
-  const title = data.title?.trim() || "Новая книга";
+  const customTitle = data.title?.trim();
+  const title = customTitle || "Новая книга";
   const coverImageUrl =
     data.coverImageUrl?.trim() || "/images/books/default-cover.jpg";
 
-  const { id } = await createBookWithSlug(prisma, {
-    title,
-    coverImageUrl,
-    status: "draft",
-  });
+  const { id } = await createBookWithSlug(
+    prisma,
+    {
+      title,
+      coverImageUrl,
+      status: "draft",
+    },
+    customTitle ? undefined : `draft-${Date.now().toString(36)}`,
+  );
 
   return prisma.book.findUniqueOrThrow({ where: { id } });
 }
@@ -645,34 +650,64 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
   }
   if (data.isTrending !== undefined) updateData.isTrending = data.isTrending;
 
-  // Смена slug: уникальность + история для published
-  if (data.slug !== undefined && data.slug.trim() !== book.slug) {
+  // Смена slug: уникальность в Book и BookSlugHistory + история для published
+  let shouldDeleteReclaimedHistorySlug: string | null = null;
+  let shouldRecordOldSlug: string | null = null;
+
+  if (data.slug !== undefined) {
     const newSlug = data.slug.trim().toLowerCase();
-    if (!/^[a-z0-9-]+$/.test(newSlug)) {
-      throw new AdminBookError(
-        "Slug может содержать только латиницу, цифры и дефисы",
-        "invalid_slug",
-      );
+    if (newSlug !== book.slug) {
+      if (!/^[a-z0-9-]+$/.test(newSlug)) {
+        throw new AdminBookError(
+          "Slug может содержать только латиницу, цифры и дефисы",
+          "invalid_slug",
+        );
+      }
+      const [existing, historyOccupant] = await Promise.all([
+        prisma.book.findUnique({ where: { slug: newSlug } }),
+        prisma.bookSlugHistory.findUnique({ where: { oldSlug: newSlug } }),
+      ]);
+      if (existing && existing.id !== id) {
+        throw new AdminBookError(
+          "Книга с таким slug уже существует",
+          "slug_exists",
+        );
+      }
+      if (historyOccupant) {
+        if (historyOccupant.bookId !== id) {
+          throw new AdminBookError(
+            `Этот slug уже закреплён в истории редиректов за книгой #${historyOccupant.bookId}`,
+            "slug_exists",
+          );
+        }
+        // Возврат собственного старого slug (A -> B -> A): убираем oldSlug из истории
+        shouldDeleteReclaimedHistorySlug = newSlug;
+      }
+      if (book.status === "published" && book.slug) {
+        shouldRecordOldSlug = book.slug;
+      }
+      updateData.slug = newSlug;
     }
-    const existing = await prisma.book.findUnique({ where: { slug: newSlug } });
-    if (existing && existing.id !== id) {
-      throw new AdminBookError(
-        "Книга с таким slug уже существует",
-        "slug_exists",
-      );
-    }
-    if (book.status === "published" && book.slug) {
-      await prisma.bookSlugHistory.create({
-        data: { oldSlug: book.slug, bookId: id },
-      });
-    }
-    updateData.slug = newSlug;
   }
 
   const oldCover = book.coverImageUrl;
   const oldAnimatedCover = book.animatedCoverUrl;
 
-  const updated = await prisma.book.update({ where: { id }, data: updateData });
+  const updated = await prisma.$transaction(async (tx) => {
+    if (shouldDeleteReclaimedHistorySlug) {
+      await tx.bookSlugHistory.delete({
+        where: { oldSlug: shouldDeleteReclaimedHistorySlug },
+      });
+    }
+    if (shouldRecordOldSlug) {
+      await tx.bookSlugHistory.upsert({
+        where: { oldSlug: shouldRecordOldSlug },
+        create: { oldSlug: shouldRecordOldSlug, bookId: id },
+        update: { bookId: id },
+      });
+    }
+    return tx.book.update({ where: { id }, data: updateData });
+  });
 
   // Старый файл обложки (наш S3/CDN/локальный) осиротел — чистим,
   // если на него никто больше не ссылается

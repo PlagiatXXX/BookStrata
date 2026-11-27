@@ -23,6 +23,9 @@ vi.mock("../../lib/prisma.js", () => ({
       findMany: vi.fn(),
       create: vi.fn(),
     },
+    bookSlugHistory: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
     $transaction: vi.fn((ops: unknown[]) => Promise.all(ops)),
   },
 }));

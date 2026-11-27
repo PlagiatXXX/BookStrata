@@ -61,6 +61,9 @@ vi.mock("../../lib/prisma.js", () => ({
       delete: vi.fn(),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
+    bookSlugHistory: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
     $queryRaw: vi.fn().mockResolvedValue([]),
     author: {
       findFirst: vi.fn().mockResolvedValue(null), // по умолчанию автор не найден

@@ -10,6 +10,7 @@ import { Prisma } from "@prisma/client";
 const mocks = vi.hoisted(() => ({
   prisma: {
     $queryRaw: vi.fn(),
+    $transaction: vi.fn(),
     book: {
       findMany: vi.fn(),
       count: vi.fn(),
@@ -19,7 +20,12 @@ const mocks = vi.hoisted(() => ({
       update: vi.fn(),
       create: vi.fn(),
     },
-    bookSlugHistory: { create: vi.fn() },
+    bookSlugHistory: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
+    },
     analyticsEvent: { groupBy: vi.fn() },
     bookComment: { findMany: vi.fn(), count: vi.fn(), update: vi.fn(), delete: vi.fn() },
     user: { findMany: vi.fn() },
@@ -135,6 +141,10 @@ describe("Admin Books Routes", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     mocks.prisma.$queryRaw.mockReset();
+    mocks.prisma.$transaction.mockReset();
+    mocks.prisma.$transaction.mockImplementation((fn: (tx: typeof mocks.prisma) => Promise<unknown>) =>
+      fn(mocks.prisma),
+    );
     // Сбрасываем очереди mockResolvedValueOnce между тестами
     mocks.prisma.book.findUnique.mockReset();
     mocks.prisma.book.findUniqueOrThrow.mockReset();
@@ -149,6 +159,10 @@ describe("Admin Books Routes", () => {
     mocks.prisma.bookComment.count.mockReset();
     mocks.prisma.analyticsEvent.groupBy.mockReset();
     mocks.prisma.bookSlugHistory.create.mockReset();
+    mocks.prisma.bookSlugHistory.findUnique.mockReset();
+    mocks.prisma.bookSlugHistory.findUnique.mockResolvedValue(null);
+    mocks.prisma.bookSlugHistory.upsert.mockReset();
+    mocks.prisma.bookSlugHistory.delete.mockReset();
     mocks.prisma.user.findMany.mockReset();
     mocks.prisma.user.findMany.mockResolvedValue([]);
     mocks.prisma.bookPlacement.findMany.mockReset();
@@ -602,7 +616,7 @@ describe("Admin Books Routes", () => {
   });
 
   describe("PATCH /:id — правка полей и slug", () => {
-    it("смена slug у published → oldSlug пишется в BookSlugHistory", async () => {
+    it("смена slug у published → oldSlug пишется в BookSlugHistory (upsert)", async () => {
       mocks.prisma.book.findUnique
         .mockResolvedValueOnce({ ...bookRow, id: 10 }) // текущая книга
         .mockResolvedValueOnce(null); // slug свободен
@@ -616,9 +630,77 @@ describe("Admin Books Routes", () => {
       });
 
       expect(res.statusCode).toBe(200);
-      expect(mocks.prisma.bookSlugHistory.create).toHaveBeenCalledWith({
-        data: { oldSlug: "anna-karenina-lev-tolstoj", bookId: 10 },
+      expect(mocks.prisma.bookSlugHistory.upsert).toHaveBeenCalledWith({
+        where: { oldSlug: "anna-karenina-lev-tolstoj" },
+        create: { oldSlug: "anna-karenina-lev-tolstoj", bookId: 10 },
+        update: { bookId: 10 },
       });
+    });
+
+    it("новый slug занят в BookSlugHistory другой книгой → 409", async () => {
+      mocks.prisma.book.findUnique
+        .mockResolvedValueOnce({ ...bookRow, id: 10 })
+        .mockResolvedValueOnce(null); // в Book свободен
+      mocks.prisma.bookSlugHistory.findUnique.mockResolvedValueOnce({
+        id: 42,
+        oldSlug: "staryj-slug-drugoj",
+        bookId: 99,
+      });
+
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { slug: "staryj-slug-drugoj" },
+      });
+
+      expect(res.statusCode).toBe(409);
+      expect(mocks.prisma.book.update).not.toHaveBeenCalled();
+    });
+
+    it("возврат собственного старого slug (A -> B -> A) удаляет oldSlug из истории и пишет текущий", async () => {
+      mocks.prisma.book.findUnique
+        .mockResolvedValueOnce({ ...bookRow, id: 10, slug: "anna-karenina-2" })
+        .mockResolvedValueOnce(null);
+      mocks.prisma.bookSlugHistory.findUnique.mockResolvedValueOnce({
+        id: 7,
+        oldSlug: "anna-karenina-lev-tolstoj",
+        bookId: 10,
+      });
+      mocks.prisma.book.update.mockResolvedValue({ ...bookRow, slug: "anna-karenina-lev-tolstoj" });
+
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { slug: "anna-karenina-lev-tolstoj" },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(mocks.prisma.bookSlugHistory.delete).toHaveBeenCalledWith({
+        where: { oldSlug: "anna-karenina-lev-tolstoj" },
+      });
+      expect(mocks.prisma.bookSlugHistory.upsert).toHaveBeenCalledWith({
+        where: { oldSlug: "anna-karenina-2" },
+        create: { oldSlug: "anna-karenina-2", bookId: 10 },
+        update: { bookId: 10 },
+      });
+    });
+
+    it("смена только регистра того же slug не пишет историю", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.prisma.book.update.mockResolvedValue({ ...bookRow });
+
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { slug: "Anna-Karenina-Lev-Tolstoj" },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(mocks.prisma.bookSlugHistory.upsert).not.toHaveBeenCalled();
+      expect(mocks.prisma.bookSlugHistory.create).not.toHaveBeenCalled();
     });
 
     it("у draft-книги смена slug НЕ пишет историю", async () => {
@@ -634,6 +716,7 @@ describe("Admin Books Routes", () => {
         payload: { slug: "anna-draft" },
       });
 
+      expect(mocks.prisma.bookSlugHistory.upsert).not.toHaveBeenCalled();
       expect(mocks.prisma.bookSlugHistory.create).not.toHaveBeenCalled();
     });
 
@@ -1363,6 +1446,7 @@ describe("Admin Books Routes", () => {
           title: "Новая книга",
           coverImageUrl: "/images/books/default-cover.jpg",
           status: "draft",
+          slug: expect.stringMatching(/^draft-[a-z0-9]+$/),
         }),
       });
     });

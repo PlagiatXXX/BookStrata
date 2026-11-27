@@ -59,6 +59,9 @@ const mockTx = {
     delete: vi.fn(),
     findUnique: vi.fn(),
   },
+  bookSlugHistory: {
+    findUnique: vi.fn().mockResolvedValue(null),
+  },
   collectionBook: {
     upsert: vi.fn(),
     findMany: vi.fn(),
@@ -197,6 +200,7 @@ describe("syncCatalogCards", () => {
     (mockTx.book.create as any).mockResolvedValue({ id: 42 });
     (mockTx.book.update as any).mockResolvedValue({});
     (mockTx.book.delete as any).mockResolvedValue({});
+    (mockTx.bookSlugHistory.findUnique as any).mockResolvedValue(null);
     (mockTx.collectionBook.upsert as any).mockResolvedValue({});
     (mockTx.collectionBook.findMany as any).mockResolvedValue([]);
     (mockTx.collectionBook.deleteMany as any).mockResolvedValue({});

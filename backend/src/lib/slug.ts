@@ -66,6 +66,15 @@ export async function createBookWithSlug(
   for (let attempt = 1; attempt <= 10; attempt++) {
     const slug = candidate(attempt);
 
+    // Не занимаем slug, уже отданный под 301-редирект в book_slug_history:
+    // иначе страница книги будет редиректить на чужую книгу, а смена slug
+    // у published-книги упадёт с P2002 (unique oldSlug).
+    const historyOccupant = await tx.bookSlugHistory.findUnique({
+      where: { oldSlug: slug },
+      select: { id: true },
+    });
+    if (historyOccupant) continue;
+
     const occupant = await tx.book.findUnique({
       where: { slug },
       select: { id: true, status: true },

@@ -32,6 +32,9 @@ vi.mock("../../lib/prisma.js", () => ({
       findUnique: vi.fn().mockResolvedValue(null),
       create: vi.fn(),
     },
+    bookSlugHistory: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
     bookPlacement: {
       findMany: vi.fn().mockResolvedValue([]),
       create: vi.fn(),
@@ -94,6 +97,7 @@ describe("addBooksToTierList: конкурентная защита (P2002 → r
     (prisma.book.findFirst as any).mockResolvedValue(null);
     (prisma.book.findMany as any).mockResolvedValue([]);
     (prisma.book.findUnique as any).mockResolvedValue(null);
+    (prisma.bookSlugHistory.findUnique as any).mockResolvedValue(null);
     (prisma.bookPlacement.findMany as any).mockResolvedValue([]);
     (prisma.$queryRaw as any).mockResolvedValue([]);
     (prisma.bookPlacement.create as any).mockImplementation(({ data }: any) =>
@@ -212,6 +216,7 @@ describe("addBooksToTierList: матчинг с каталогом (published)",
     (prisma.book.findFirst as any).mockResolvedValue(null);
     (prisma.book.findMany as any).mockResolvedValue([]);
     (prisma.book.findUnique as any).mockResolvedValue(null);
+    (prisma.bookSlugHistory.findUnique as any).mockResolvedValue(null);
     (prisma.bookPlacement.findMany as any).mockResolvedValue([]);
     (prisma.$queryRaw as any).mockResolvedValue([]);
     (prisma.bookPlacement.create as any).mockImplementation(({ data }: any) =>
