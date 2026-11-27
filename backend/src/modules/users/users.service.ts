@@ -825,9 +825,15 @@ export async function getViolators() {
 }
 
 // POST /api/users/heartbeat — пульс активности (раз в минуту от фронта)
-export async function heartbeat(userId: number) {
+export async function heartbeat(userId: number, userAgent?: string | null) {
   const presence = createPresenceService(prisma, redis as unknown as PresenceRedisClient);
-  await presence.recordActiveMinuteWithThrottle(userId);
+  await presence.ping({
+    userId,
+    anonId: `legacy:${userId}`,
+    page: "/",
+    status: "active",
+    userAgent,
+  });
   return { ok: true };
 }
 

@@ -35,6 +35,20 @@ vi.mock("../../lib/prisma.js", () => ({
   },
 }));
 
+vi.mock("../../lib/redis.js", () => ({
+  redis: {
+    status: "ready",
+    get: vi.fn().mockResolvedValue(null),
+    mget: vi.fn().mockResolvedValue([]),
+    set: vi.fn().mockResolvedValue("OK"),
+    del: vi.fn().mockResolvedValue(0),
+    zadd: vi.fn().mockResolvedValue(1),
+    zrem: vi.fn().mockResolvedValue(0),
+    zrange: vi.fn().mockResolvedValue([]),
+    zremrangebyscore: vi.fn().mockResolvedValue(0),
+  },
+}));
+
 // Мокаем bcryptjs ПЕРЕД импортом
 vi.mock("bcryptjs", () => ({
   default: {
@@ -1203,16 +1217,32 @@ describe("users.service", () => {
   })
 
   describe("heartbeat", () => {
-    it("должен инкрементировать totalActiveMinutes и обновлять lastActivityAt", async () => {
-      const { prisma } = await import("../../lib/prisma.js")
-      ;(prisma.$executeRaw as any).mockResolvedValue([{ ok: true }])
+    it("должен инкрементировать totalActiveMinutes, обновлять lastActivityAt и записывать пользователя в Redis presence", async () => {
+      const { prisma } = await import("../../lib/prisma.js");
+      const { redis } = await import("../../lib/redis.js");
+      (prisma.user.findUnique as any).mockResolvedValue({
+        username: "stranger",
+        avatarUrl: null,
+        role: { name: "user" },
+      });
+      (redis.get as any).mockResolvedValue(null);
+      (redis.set as any).mockResolvedValue("OK");
+      (redis.zadd as any).mockResolvedValue(1);
+      (prisma.$executeRaw as any).mockResolvedValue([{ ok: true }]);
 
-      const result = await userService.heartbeat(42)
+      const result = await userService.heartbeat(42, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edg/131.0");
 
-      expect(prisma.$executeRaw).toHaveBeenCalledOnce()
-      expect(result).toEqual({ ok: true })
-    })
-  })
+      expect(prisma.$executeRaw).toHaveBeenCalledOnce();
+      expect(redis.set).toHaveBeenCalledWith(
+        "presence:user:42",
+        expect.stringContaining('"username":"stranger"'),
+        "EX",
+        90,
+      );
+      expect(redis.zadd).toHaveBeenCalledWith("presence:users", expect.any(Number), "42");
+      expect(result).toEqual({ ok: true });
+    });
+  });
 
   describe("buildTimelineSeries", () => {
     it("строит непрерывный ряд из 6 месяцев с нулями", () => {

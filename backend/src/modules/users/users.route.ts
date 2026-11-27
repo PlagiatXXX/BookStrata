@@ -393,7 +393,7 @@ export async function userRoutes(fastify: FastifyInstance) {
       if (!userId) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
-      const result = await heartbeat(userId);
+      const result = await heartbeat(userId, request.headers["user-agent"]);
       return reply.send(createSuccessResponse(result));
     },
   );
