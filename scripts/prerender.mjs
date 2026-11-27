@@ -138,6 +138,10 @@ const BOOK_ROUTES_PATH = resolve(ROOT, "src", "data", "book-routes.json");
 // backend/scripts/export-author-routes.ts на деплое (deploy-server.sh)
 const AUTHOR_ROUTES_PATH = resolve(ROOT, "src", "data", "author-routes.json");
 
+// Путь к JSON со slug'ами циклов (≥2 published-книг): обновляется
+// backend/scripts/export-series-routes.ts на деплое (deploy-server.sh)
+const SERIES_ROUTES_PATH = resolve(ROOT, "src", "data", "series-routes.json");
+
 // Публичные маршруты для индексации
 const ROUTES = [
   { path: "/",           name: "Главная" },
@@ -523,6 +527,35 @@ async function addPublicAuthorRoutes() {
 }
 
 /**
+ * Добавляет страницы циклов (/series/:slug) в ROUTES для prerender'а.
+ * Список циклов (≥2 published-книг) берётся из src/data/series-routes.json.
+ */
+async function addPublicSeriesRoutes() {
+  try {
+    const raw = readFileSync(SERIES_ROUTES_PATH, "utf-8");
+    const items = JSON.parse(raw);
+    if (!Array.isArray(items) || items.length === 0) {
+      log("⚠️  series-routes.json is empty, skipping");
+      return;
+    }
+    for (const item of items) {
+      const slug = item.slug;
+      if (!slug) {
+        log(`  ⚠️  Series "${item.name}" has no slug, skipping`);
+        continue;
+      }
+      const path = `/series/${slug}`;
+      ROUTES.push({ path, name: `Цикл: ${item.name}` });
+      log(`  → ${path} (${item.name})`);
+    }
+    log(`✅ Added ${items.filter(i => i.slug).length} series to prerender`);
+  } catch (err) {
+    log(`⚠️  Cannot read series-routes.json: ${err.message}`);
+    log("⚠️  Series prerender skipped (run backend/scripts/export-series-routes.ts)");
+  }
+}
+
+/**
  * Добавляет страницы статей блога (/blog/:slug) в ROUTES для prerender'а.
  * Slug'и берутся из .md-файлов в src/content/articles/ — единый источник.
  */
@@ -818,6 +851,7 @@ async function processRoute(browser, route) {
   const isCelebrity = route.path.startsWith("/celebrities/");
   const isTopic = route.path.startsWith("/topics/");
   const isNews = route.path.startsWith("/news/");
+  const isSeries = route.path.startsWith("/series/");
   const isRankings = route.path.startsWith("/rankings");
 
   const context = await browser.newContext({
@@ -1027,7 +1061,7 @@ async function processRoute(browser, route) {
 
     // ── Ждём реальный контент (проверка каждые 500 мс) ──
     // Для динамических страниц (тир-листы, коллекции) даём больше времени
-    const contentTimeout = (isTierList || isCollection || isCelebrity || isTopic || isNews) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
+    const contentTimeout = (isTierList || isCollection || isCelebrity || isTopic || isNews || isSeries) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
     const contentLoaded = await waitForContent(page, contentTimeout, route.path);
 
     // ── Дожидаемся завершения in-flight API-запросов ──
@@ -1198,6 +1232,21 @@ async function processRoute(browser, route) {
   <nav>
     <a href="/">BookStrata — главная</a> |
     <a href="/celebrities">Все знаменитости</a>
+  </nav>
+</article>`;
+      } else if (isSeries) {
+        const seriesName = escapeHtml(route.name.replace("Цикл: ", ""));
+        fallbackTitle = `${seriesName} — все книги цикла по порядку | BookStrata`;
+        fallbackDesc = `В каком порядке читать цикл (серию книг) «${seriesName}»: полный список книг по порядку на BookStrata.`;
+        canonicalPath = route.path;
+        fallbackBodyHtml = `
+<article itemscope itemtype="https://schema.org/BookSeries">
+  <h1 itemprop="name">${seriesName}</h1>
+  <p itemprop="description">${fallbackDesc}</p>
+  <p>Список книг цикла временно недоступен. Зайдите позже.</p>
+  <nav>
+    <a href="/">BookStrata — главная</a> |
+    <a href="/rankings">Рейтинг книг</a>
   </nav>
 </article>`;
       } else {
@@ -1414,6 +1463,7 @@ async function prerender() {
       await addPublicCollectionRoutes();
       await addPublicBookRoutes();
       await addPublicAuthorRoutes();
+      await addPublicSeriesRoutes();
       await addNewsRoutes();
     }
     await addTopicRoutes();

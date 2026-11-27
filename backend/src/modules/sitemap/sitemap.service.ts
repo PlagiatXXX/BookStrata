@@ -126,6 +126,32 @@ export async function generateSitemap(): Promise<string> {
     // таблица authors ещё не создана — пропускаем
   }
 
+  // Циклы книг — только с ≥2 опубликованными каталоговыми книгами (защита от thin content)
+  let seriesList: { slug: string; updatedAt: Date }[] = [];
+  try {
+    const seriesRecords = await prisma.series.findMany({
+      where: {
+        books: { some: { status: "published", userId: null, mergedIntoId: null } },
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+        books: {
+          where: { status: "published", userId: null, mergedIntoId: null },
+          select: { id: true },
+          take: 2,
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 2000,
+    });
+    seriesList = seriesRecords
+      .filter((s) => s.books.length >= 2)
+      .map((s) => ({ slug: s.slug, updatedAt: s.updatedAt }));
+  } catch {
+    // таблица series ещё не создана — пропускаем
+  }
+
   const newsUrls = newsArticles.map((a) =>
     xmlTag(
       `${SITE_URL}/news/${a.id}`,
@@ -187,6 +213,15 @@ export async function generateSitemap(): Promise<string> {
     ),
   );
 
+  const seriesUrls = seriesList.map((s) =>
+    xmlTag(
+      `${SITE_URL}/series/${s.slug}`,
+      "0.7",
+      "weekly",
+      s.updatedAt.toISOString().split("T")[0],
+    ),
+  );
+
   // Книги каталога — только published (Фаза 6): slug обязателен (страница /books/:slug)
   // Лимит 45 000: протокол sitemap допускает 50 000 URL на файл, остальные ~600 URL
   // (статика, авторы, коллекции, тир-листы) оставляют запас. Без лимита 1000 новые
@@ -241,6 +276,6 @@ export async function generateSitemap(): Promise<string> {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls, ...celebrityUrls, ...authorUrls, ...bookUrls, ...topicUrls].join("\n")}
+${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls, ...celebrityUrls, ...authorUrls, ...seriesUrls, ...bookUrls, ...topicUrls].join("\n")}
 </urlset>`;
 }

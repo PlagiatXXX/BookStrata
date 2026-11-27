@@ -26,6 +26,11 @@ import type {
   ReadingProfile,
 } from "@/lib/adminBooksApi";
 import { uploadBookCover, uploadBookAnimatedCover } from "@/lib/adminBooksApi";
+import {
+  listAdminSeries,
+  createAdminSeries,
+  type SeriesSummary,
+} from "@/lib/seriesApi";
 import { parseAnimatedCoverUrl, formatAnimatedCoverUrl } from "@/utils/animatedCover";
 import { buildBookAnimationPrompt, buildBookAnimationSpecs } from "./coverPromptHelper";
 import { ReadingProfilePrompt } from "./ReadingProfilePrompt";
@@ -165,6 +170,49 @@ export function BookEditModal({
   // Сырая строка тегов: парсится в массив только при сохранении, иначе
   // запятая мгновенно отфильтровывается как пустой тег и не вводится
   const [tagsInput, setTagsInput] = useState((book.tags ?? []).join(", "));
+  // Цикл книг: autocomplete + inline-создание + номер в цикле
+  const [seriesQuery, setSeriesQuery] = useState(book.series?.name ?? "");
+  const [selectedSeries, setSelectedSeries] = useState<{
+    id: number;
+    name: string;
+    slug: string;
+  } | null>(book.series ?? null);
+  const [seriesDirty, setSeriesDirty] = useState(false);
+  const [seriesSuggestions, setSeriesSuggestions] = useState<SeriesSummary[]>([]);
+  const [seriesDropdownOpen, setSeriesDropdownOpen] = useState(false);
+  const [seriesCreating, setSeriesCreating] = useState(false);
+  const [seriesOrderInput, setSeriesOrderInput] = useState<string>(
+    book.seriesOrder != null ? String(book.seriesOrder) : "",
+  );
+
+  useEffect(() => {
+    if (!seriesDropdownOpen) return;
+    const timer = window.setTimeout(() => {
+      listAdminSeries({ q: seriesQuery.trim() || undefined, limit: 10 })
+        .then((res) => setSeriesSuggestions(res.items))
+        .catch(() => setSeriesSuggestions([]));
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [seriesQuery, seriesDropdownOpen]);
+
+  const handleCreateInlineSeries = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed || seriesCreating) return;
+    setSeriesCreating(true);
+    try {
+      const created = await createAdminSeries({
+        name: trimmed,
+        authorId: book.authorId ?? null,
+        findOrCreate: true,
+      });
+      setSelectedSeries({ id: created.id, name: created.name, slug: created.slug });
+      setSeriesQuery(created.name);
+      setSeriesDirty(true);
+      setSeriesDropdownOpen(false);
+    } finally {
+      setSeriesCreating(false);
+    }
+  };
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -442,6 +490,108 @@ export function BookEditModal({
             <input
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
+              className="w-full rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
+            />
+          </label>
+          <div className="relative">
+            <span className="mb-1 block text-sm text-(--ink-1)">Цикл</span>
+            <div className="flex gap-1.5">
+              <input
+                aria-label="Цикл"
+                value={seriesQuery}
+                onFocus={() => setSeriesDropdownOpen(true)}
+                onBlur={() => {
+                  window.setTimeout(() => setSeriesDropdownOpen(false), 150);
+                }}
+                onChange={(e) => {
+                  const nextVal = e.target.value;
+                  setSeriesQuery(nextVal);
+                  setSeriesDirty(true);
+                  if (!nextVal.trim()) {
+                    setSelectedSeries(null);
+                  } else if (selectedSeries && selectedSeries.name !== nextVal) {
+                    setSelectedSeries(null);
+                  }
+                  setSeriesDropdownOpen(true);
+                }}
+                placeholder="Начните вводить название цикла…"
+                className="w-full rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
+              />
+              {(selectedSeries || seriesQuery) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSeries(null);
+                    setSeriesQuery("");
+                    setSeriesOrderInput("");
+                    setSeriesDirty(true);
+                  }}
+                  className="rounded-lg border border-(--ink-3) px-2.5 text-(--ink-1) hover:bg-(--ink-3) hover:text-white cursor-pointer"
+                  aria-label="Отвязать цикл"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            {seriesDropdownOpen && (
+              <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-52 overflow-y-auto rounded-lg border border-(--ink-3) bg-(--bg-1) shadow-xl">
+                {seriesSuggestions.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setSelectedSeries({ id: s.id, name: s.name, slug: s.slug });
+                      setSeriesQuery(s.name);
+                      setSeriesDirty(true);
+                      setSeriesDropdownOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm text-(--ink-0) hover:bg-(--ink-3)/40 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{s.name}</span>
+                    {s.author && (
+                      <span className="text-xs text-(--ink-2)">{s.author.name}</span>
+                    )}
+                  </button>
+                ))}
+                {seriesQuery.trim() &&
+                  !seriesSuggestions.some(
+                    (s) => s.name.toLowerCase() === seriesQuery.trim().toLowerCase(),
+                  ) && (
+                    <button
+                      type="button"
+                      disabled={seriesCreating}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        void handleCreateInlineSeries(seriesQuery);
+                      }}
+                      className="w-full border-t border-(--ink-3) px-3 py-2 text-left text-sm text-(--accent-main) hover:bg-(--ink-3)/30 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus size={14} />
+                      {seriesCreating
+                        ? "Создание…"
+                        : `Создать цикл «${seriesQuery.trim()}»`}
+                    </button>
+                  )}
+              </div>
+            )}
+          </div>
+          <label className="block">
+            <span className="mb-1 block text-sm text-(--ink-1)">
+              Номер в цикле
+            </span>
+            <input
+              type="number"
+              step="0.5"
+              min={0}
+              max={1000}
+              aria-label="Номер в цикле"
+              value={seriesOrderInput}
+              onChange={(e) => {
+                setSeriesOrderInput(e.target.value);
+                setSeriesDirty(true);
+              }}
+              placeholder="1, 2 или 1.5"
               className="w-full rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
             />
           </label>
@@ -1015,8 +1165,36 @@ export function BookEditModal({
                 setProfileError(null);
               }
 
+              let resolvedSeriesId = selectedSeries?.id ?? null;
+              if (seriesDirty && !resolvedSeriesId && seriesQuery.trim()) {
+                const created = await createAdminSeries({
+                  name: seriesQuery.trim(),
+                  authorId: book.authorId ?? null,
+                  findOrCreate: true,
+                });
+                resolvedSeriesId = created.id;
+                setSelectedSeries({
+                  id: created.id,
+                  name: created.name,
+                  slug: created.slug,
+                });
+              }
+
+              const parsedOrder = seriesOrderInput.trim()
+                ? Number(seriesOrderInput.trim())
+                : null;
+
               const patch: BookUpdateInput = {
                 ...nextForm,
+                ...(seriesDirty
+                  ? {
+                      seriesId: resolvedSeriesId,
+                      seriesOrder:
+                        resolvedSeriesId !== null && parsedOrder !== null && Number.isFinite(parsedOrder)
+                          ? parsedOrder
+                          : null,
+                    }
+                  : {}),
                 tags: tagsInput
                   .split(",")
                   .map((t) => t.trim())

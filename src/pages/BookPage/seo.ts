@@ -122,6 +122,10 @@ export function buildBookJsonLd(book: {
   comments?: BookComment[] | null;
   /** Ключевые персонажи книги для микроразметки Schema.org Person */
   characters?: Array<{ name: string }> | null;
+  /** Цикл книг для микроразметки Schema.org BookSeries (isPartOf) */
+  series?: { name: string; slug: string } | null;
+  /** Номер книги в цикле */
+  seriesOrder?: number | null;
 }): Record<string, unknown> {
   const guide = book.readingGuide ?? null;
 
@@ -185,6 +189,16 @@ export function buildBookJsonLd(book: {
     ...(jsonLdComments ? { comment: jsonLdComments } : {}),
     ...(validChars.length > 0
       ? { character: validChars.map((name) => ({ "@type": "Person", name })) }
+      : {}),
+    ...(book.series
+      ? {
+          isPartOf: {
+            "@type": "BookSeries",
+            name: book.series.name,
+            url: `${new URL(book.url).origin}/series/${book.series.slug}`,
+            ...(book.seriesOrder != null ? { position: book.seriesOrder } : {}),
+          },
+        }
       : {}),
   };
 }

@@ -116,6 +116,7 @@ export default function BookPage() {
   const {
     book,
     author,
+    series,
     tierLists,
     collections,
     celebrities,
@@ -178,6 +179,8 @@ export default function BookPage() {
     url: `${SITE_URL}/books/${canonicalSlug}`,
     comments: comments.items,
     characters,
+    series,
+    seriesOrder: book.seriesOrder,
   });
 
   // Статус книги в «Моей полке» (want_to_read / read / null)
@@ -399,6 +402,36 @@ export default function BookPage() {
                       book.author
                     )}
                   </h2>
+                )}
+
+                {series && (
+                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/80 mb-4">
+                    <span className="text-white/55">Цикл:</span>
+                    <Link
+                      to={`/series/${series.slug}?from=${canonicalSlug}`}
+                      className="font-semibold text-white hover:text-(--bp-primary) underline-offset-4 hover:underline transition-colors"
+                    >
+                      {series.name}
+                    </Link>
+                    {book.seriesOrder != null && (
+                      <>
+                        <span className="text-white/35">·</span>
+                        <span className="text-(--bp-primary) font-medium">
+                          №
+                          {Number.isInteger(book.seriesOrder)
+                            ? book.seriesOrder
+                            : String(book.seriesOrder).replace(".", ",")}
+                        </span>
+                      </>
+                    )}
+                    <span className="text-white/35">·</span>
+                    <Link
+                      to={`/series/${series.slug}?from=${canonicalSlug}`}
+                      className="text-(--bp-primary) hover:underline underline-offset-4 transition-colors"
+                    >
+                      В каком порядке читать? →
+                    </Link>
+                  </p>
                 )}
 
                 {/* Описание с fade-out — видно всем */}

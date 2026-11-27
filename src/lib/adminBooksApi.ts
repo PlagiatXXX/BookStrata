@@ -85,6 +85,9 @@ export interface AdminBookDetail extends AdminBookListItem {
   contextChain: ContextChainItem[] | null;
   readingGuide: ReadingGuide | null;
   readingProfile: ReadingProfile | null;
+  seriesId?: number | null;
+  seriesOrder?: number | null;
+  series?: { id: number; name: string; slug: string } | null;
   createdAt: string;
   authorRel: { name: string } | null;
   slugHistory: { id: number; oldSlug: string; createdAt: string }[];
@@ -144,6 +147,10 @@ export interface BookUpdateInput {
   isTrending?: boolean;
   /** Рейтинг каталога 0–10 */
   rating?: number | null;
+  /** ID цикла (null — отвязать) */
+  seriesId?: number | null;
+  /** Номер книги в цикле */
+  seriesOrder?: number | null;
 }
 
 export interface AdminComment {

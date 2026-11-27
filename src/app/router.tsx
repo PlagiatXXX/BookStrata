@@ -42,6 +42,7 @@ const NotFoundPage = lazy(() => import("@/pages/NotFoundPage/NotFoundPage"));
 const CollectionPage = lazy(() => import("@/pages/CollectionPage/CollectionPage"));
 const CollectionsPage = lazy(() => import("@/pages/CollectionsPage/CollectionsPage"));
 const BookPage = lazy(() => import("@/pages/BookPage/BookPage"));
+const SeriesPage = lazy(() => import("@/pages/SeriesPage"));
 const AuthorPage = lazy(() => import("@/pages/AuthorPage"));
 const AuthorsPage = lazy(() => import("@/pages/AuthorsPage"));
 const RankingsPage = lazy(() => import("@/pages/RankingsPage/RankingsPage"));
@@ -54,6 +55,7 @@ const CelebritiesPage = lazy(() => import("@/pages/CelebritiesPage/CelebritiesPa
 const CelebrityPage = lazy(() => import("@/pages/CelebrityPage/CelebrityPage"));
 const AdminCelebritiesPage = lazy(() => import("@/pages/AdminCelebritiesPage/AdminCelebritiesPage"));
 const AdminBooksPage = lazy(() => import("@/pages/AdminBooksPage/AdminBooksPage"));
+const AdminSeriesPage = lazy(() => import("@/pages/AdminSeriesPage"));
 const AdminAuthorsPage = lazy(() => import("@/pages/AdminAuthorsPage/AdminAuthorsPage"));
 const AdminSubscriptionsPage = lazy(() => import("@/pages/AdminSubscriptionsPage"));
 const ReadingDnaPage = lazy(() => import("@/pages/ReadingDnaPage"));
@@ -92,6 +94,7 @@ export const router = createBrowserRouter([
       { path: "/collections", element: <CollectionsPage /> },
       { path: "/collections/:slug", element: <CollectionPage /> },
       { path: "/books/:slug", element: <BookPage /> },
+      { path: "/series/:slug", element: <SeriesPage /> },
       { path: "/authors", element: <AuthorsPage /> },
       { path: "/authors/:slug", element: <AuthorPage /> },
       { path: "/tier-lists/:id", element: <TierListEditorPage /> },
@@ -149,6 +152,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminBooksPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/series",
+        element: (
+          <AdminGuard>
+            <AdminSeriesPage />
           </AdminGuard>
         ),
       },

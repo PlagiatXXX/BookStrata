@@ -509,6 +509,9 @@ export async function getBookAdmin(id: number) {
       publishedAt: true,
       createdAt: true,
       updatedAt: true,
+      seriesId: true,
+      seriesOrder: true,
+      series: { select: { id: true, name: true, slug: true } },
       slugHistory: { select: { id: true, oldSlug: true, createdAt: true } },
       authorRel: { select: { name: true } },
     },
@@ -555,6 +558,10 @@ export interface BookUpdateInput {
   isTrending?: boolean;
   /** Рейтинг каталога 0–10 (как в коллекциях/знаменитостях) */
   rating?: number | null;
+  /** ID цикла книг (null — отвязать от цикла) */
+  seriesId?: number | null;
+  /** Номер книги в цикле (допускает дробные, напр. 1.5) */
+  seriesOrder?: number | null;
 }
 
 export interface BookCreateInput {
@@ -651,6 +658,34 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
       updateData.authorRel = { disconnect: true };
       updateData.author = null;
     }
+  }
+  if (data.seriesId !== undefined) {
+    if (data.seriesId === null) {
+      updateData.series = { disconnect: true };
+    } else {
+      if (!Number.isInteger(data.seriesId) || data.seriesId <= 0) {
+        throw new ValidationError("Некорректный ID цикла");
+      }
+      const seriesExists = await prisma.series.findUnique({
+        where: { id: data.seriesId },
+        select: { id: true },
+      });
+      if (!seriesExists) {
+        throw new ValidationError("Цикл не найден");
+      }
+      updateData.series = { connect: { id: data.seriesId } };
+    }
+  }
+  if (data.seriesOrder !== undefined) {
+    if (
+      data.seriesOrder !== null &&
+      (!Number.isFinite(data.seriesOrder) ||
+        data.seriesOrder < 0 ||
+        data.seriesOrder > 1000)
+    ) {
+      throw new ValidationError("Номер в цикле должен быть от 0 до 1000");
+    }
+    updateData.seriesOrder = data.seriesOrder;
   }
   if (data.contextChain !== undefined) {
     updateData.contextChain =
@@ -1072,10 +1107,20 @@ export async function mergeBooksByIds(dupId: number, canonId: number) {
     { forceCanonId: canonId },
   );
 
+  const canonPatch: Prisma.BookUpdateInput = {};
   if (dupReadingGuide && !canon.readingGuide) {
+    canonPatch.readingGuide = dupReadingGuide;
+  }
+  if (dup.seriesId && !canon.seriesId) {
+    canonPatch.series = { connect: { id: dup.seriesId } };
+    if (canon.seriesOrder == null && dup.seriesOrder != null) {
+      canonPatch.seriesOrder = dup.seriesOrder;
+    }
+  }
+  if (Object.keys(canonPatch).length > 0) {
     await prisma.book.update({
       where: { id: canonId },
-      data: { readingGuide: dupReadingGuide },
+      data: canonPatch,
     });
   }
 

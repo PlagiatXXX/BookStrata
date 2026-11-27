@@ -107,7 +107,7 @@ cd "$PROJECT_DIR"
 # Сгенерированные маршруты (src/data/*-routes.json) перезаписываются на каждом
 # деплое экспортом из БД — локальные изменения в них блокируют git pull.
 # Сбрасываем их перед pull: они регенерируются на шаге 11.
-git checkout -- src/data/collection-routes.json src/data/book-routes.json src/data/author-routes.json 2>/dev/null || true
+git checkout -- src/data/collection-routes.json src/data/book-routes.json src/data/author-routes.json src/data/series-routes.json 2>/dev/null || true
 git pull
 ok "Код обновлён"
 
@@ -130,7 +130,7 @@ if [ "$SKIP_BUILD" = false ] && [ -d "$PROJECT_DIR/dist" ]; then
     cp -rn "$PROJECT_DIR/dist/assets/." "$PROJECT_DIR/dist.tmp/assets/" 2>/dev/null || true
   fi
   # Переносим сгенерированные каталоги HTML
-  for dir in books authors collections tier-lists topics celebrities blog news; do
+  for dir in books authors series collections tier-lists topics celebrities blog news; do
     if [ -d "$PROJECT_DIR/dist/$dir" ]; then
       cp -r "$PROJECT_DIR/dist/$dir" "$PROJECT_DIR/dist.tmp/"
     fi
@@ -237,6 +237,13 @@ if [ "$SKIP_BUILD" = false ] && [ "$SKIP_PRERENDER" = false ]; then
       ok "Маршруты авторов экспортированы"
     else
       warn "Не удалось экспортировать авторов — prerender использует JSON из репы"
+    fi
+    # Маршруты циклов: циклы с ≥2 published-книгами → series-routes.json для prerender'а
+    if DATABASE_URL="postgresql://$DB_USER:$DB_PASS@127.0.0.1:5432/bookstrata" \
+      npx tsx scripts/export-series-routes.ts; then
+      ok "Маршруты циклов экспортированы"
+    else
+      warn "Не удалось экспортировать циклы — prerender использует JSON из репы"
     fi
   fi
   cd "$PROJECT_DIR"

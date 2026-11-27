@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, MessageSquare, BarChart3, ArrowLeft, ShieldAlert, MailQuestion, Library, Feather } from 'lucide-react'
+import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, MessageSquare, BarChart3, ArrowLeft, ShieldAlert, MailQuestion, Library, Feather, Layers } from 'lucide-react'
 import { getAdminDashboardStats } from '@/lib/adminStatsApi'
 import { useAuth } from '@/hooks/useAuthContext'
 
@@ -47,6 +47,16 @@ const ALL_SECTIONS: AdminSection[] = [
     borderColor: 'border-teal-500/30',
     textColor: 'text-teal-500',
     roles: ['admin', 'moderator'],
+  },
+  {
+    title: 'Циклы',
+    description: 'Управление циклами книг и порядком чтения',
+    icon: Layers,
+    path: '/admin/series',
+    color: 'from-indigo-500/20 to-indigo-500/5',
+    borderColor: 'border-indigo-500/30',
+    textColor: 'text-indigo-400',
+    roles: ['admin'],
   },
   {
     title: 'Знаменитости',

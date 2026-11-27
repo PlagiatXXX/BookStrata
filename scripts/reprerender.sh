@@ -120,7 +120,7 @@ if [[ -z "$DB_PASS" ]]; then
   warn "POSTGRES_PASSWORD не задан (backend/.env) — экспорт пропущен, берём JSON из репы"
 else
   DB_URL="postgresql://$DB_USER:$DB_PASS@127.0.0.1:5432/bookstrata"
-  for exp in export-collection-routes export-book-routes export-author-routes; do
+  for exp in export-collection-routes export-book-routes export-author-routes export-series-routes; do
     if DATABASE_URL="$DB_URL" npx tsx "scripts/$exp.ts"; then
       ok "$exp"
     else

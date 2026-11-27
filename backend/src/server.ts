@@ -467,6 +467,11 @@ fastify.register(adminAuthorsRoutes, { prefix: "/api/admin/authors" });
 import { adminCharactersRoutes } from "./modules/characters/admin-characters.route.js";
 fastify.register(adminCharactersRoutes, { prefix: "/api/admin/characters" });
 
+// Циклы (серии) книг — публичный хаб и админка
+import { seriesRoutes, adminSeriesRoutes } from "./modules/series/series.route.js";
+fastify.register(seriesRoutes, { prefix: "/api/series" });
+fastify.register(adminSeriesRoutes, { prefix: "/api/admin/series" });
+
 // Sitemap (без /api префикса, доступен по /sitemap.xml)
 import { sitemapRoutes } from "../src/modules/sitemap/sitemap.route.js";
 fastify.register(sitemapRoutes);

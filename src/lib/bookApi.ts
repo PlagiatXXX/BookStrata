@@ -128,11 +128,13 @@ export interface BookPageData {
     publishedYear: number | null;
     ageRating: string | null;
     isbn: string | null;
+    seriesOrder?: number | null;
     contextChain: BookContextChainItem[] | null;
     readingGuide: ReadingGuide | null;
     readingProfile: ReadingProfile | null;
   };
   author: { id: number; name: string; slug: string | null } | null;
+  series?: { id: number; name: string; slug: string } | null;
   tierLists: { id: string; slug: string | null; title: string; isPublic: boolean; authorUsername: string }[];
   collections: { id: number; slug: string; title: string; type: string }[];
   celebrities: { id: number; slug: string; name: string }[];

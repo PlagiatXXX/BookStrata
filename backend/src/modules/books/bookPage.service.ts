@@ -43,11 +43,13 @@ export interface BookPageData {
     publishedYear: number | null;
     ageRating: string | null;
     isbn: string | null;
+    seriesOrder: number | null;
     contextChain: unknown;
     readingGuide: ReadingGuide | null;
     readingProfile: ReadingProfile | null;
   };
   author: { id: number; name: string; slug: string | null } | null;
+  series: { id: number; name: string; slug: string } | null;
   tierLists: {
     id: string;
     slug: string | null;
@@ -97,9 +99,11 @@ export async function getBookPageData(
       isbn: true,
       contextChain: true,
       readingGuide: true,
+      seriesOrder: true,
       readingProfile: true,
       mergedIntoId: true,
       authorRel: { select: { id: true, name: true, slug: true } },
+      series: { select: { id: true, name: true, slug: true } },
     },
   });
 
@@ -294,11 +298,13 @@ export async function getBookPageData(
       publishedYear: book.publishedYear,
       ageRating: book.ageRating,
       isbn: book.isbn,
+      seriesOrder: book.seriesOrder,
       contextChain: book.contextChain,
       readingGuide: book.readingGuide as ReadingGuide | null,
       readingProfile: book.readingProfile as ReadingProfile | null,
     },
     author: book.authorRel,
+    series: book.series,
     tierLists,
     collections,
     celebrities,

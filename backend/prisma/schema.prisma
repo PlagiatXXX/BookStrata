@@ -103,6 +103,8 @@ id              Int             @id @default(autoincrement())
 title           String
 author          String?
 authorId        Int?
+seriesId        Int?            @map("series_id")
+seriesOrder     Float?          @map("series_order")
 // Владелец ЛИЧНОЙ книги (из тир-листов). Каталог (published) всегда userId = null.
 // Модель «каждому пользователю своя запись» (решение 18.08): книги тир-листов —
 // личное имущество, каталог с ними не пересекается.
@@ -138,6 +140,7 @@ likes           BookLike[]
 collectionBooks CollectionBook[]
 celebrityBooks  CelebrityBook[]
 authorRel       Author?         @relation(fields: [authorId], references: [id], onDelete: Restrict)
+series          Series?         @relation(fields: [seriesId], references: [id], onDelete: SetNull)
 authorShowcase  AuthorShowcase[]
 characters      BookCharacter[]
 createdAt       DateTime        @default(now()) @map("created_at")
@@ -151,9 +154,27 @@ updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
 @@index([tags], type: Gin)
 @@index([title, author])
 @@index([authorId])
+@@index([seriesId, seriesOrder])
 @@index([status])
 @@index([status, userId, likesCount])
 @@index([status, isTrending])
+}
+
+// Циклы (серии) книг — хаб порядка чтения (/series/:slug)
+model Series {
+  id            Int      @id @default(autoincrement())
+  name          String
+  slug          String   @unique
+  description   String?
+  coverImageUrl String?  @map("cover_image_url")
+  authorId      Int?     @map("author_id")
+  author        Author?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  books         Book[]
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([authorId])
+  @@map("series")
 }
 
 // История slug: смена slug у published-книги не теряет проиндексированный URL (301)
@@ -793,6 +814,7 @@ model Author {
   manifestoRole   String? @map("manifesto_role")
   aboutText       String? @map("about_text")
   books           Book[]
+  series          Series[]
   stats           AuthorStat[]
   showcase        AuthorShowcase[]
   adaptations     AuthorAdaptation[]
