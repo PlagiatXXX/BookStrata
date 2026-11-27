@@ -104,4 +104,55 @@ describe("usePresence", () => {
     window.dispatchEvent(new Event("pagehide"));
     expect(sendPresenceLeaveMock).toHaveBeenCalledWith("anon-test-1");
   });
+
+  it("шлёт первый ping при взаимодействии, если вкладка монтировалась в hidden и visibilitychange не приходил", () => {
+    Object.defineProperty(document, "visibilityState", {
+      writable: true,
+      configurable: true,
+      value: "hidden",
+    });
+
+    renderHook(() => usePresence({ pathname: "/books/dune", userId: null, isAuthLoading: false }));
+    expect(sendPresencePingMock).not.toHaveBeenCalled();
+
+    Object.defineProperty(document, "visibilityState", {
+      writable: true,
+      configurable: true,
+      value: "visible",
+    });
+    window.dispatchEvent(new Event("scroll"));
+
+    expect(sendPresencePingMock).toHaveBeenCalledTimes(1);
+    expect(sendPresencePingMock).toHaveBeenCalledWith({
+      anonId: "anon-test-1",
+      page: "/books/dune",
+      status: "active",
+    });
+  });
+
+  it("шлёт ping при pageshow (возврат из bfcache на iOS Safari)", () => {
+    renderHook(() => usePresence({ pathname: "/books/dune", userId: 7, isAuthLoading: false }));
+    sendPresencePingMock.mockClear();
+
+    window.dispatchEvent(new Event("pageshow"));
+    expect(sendPresencePingMock).toHaveBeenCalledTimes(1);
+    expect(sendPresencePingMock).toHaveBeenCalledWith({
+      anonId: "anon-test-1",
+      page: "/books/dune",
+      status: "active",
+    });
+  });
+
+  it("повторно шлёт ping при auth-token-refreshed, чтобы не остаться гостем", () => {
+    renderHook(() => usePresence({ pathname: "/tier-lists/1", userId: 7, isAuthLoading: false }));
+    sendPresencePingMock.mockClear();
+
+    window.dispatchEvent(new Event("auth-token-refreshed"));
+    expect(sendPresencePingMock).toHaveBeenCalledTimes(1);
+    expect(sendPresencePingMock).toHaveBeenCalledWith({
+      anonId: "anon-test-1",
+      page: "/tier-lists/1",
+      status: "active",
+    });
+  });
 });

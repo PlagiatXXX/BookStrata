@@ -442,6 +442,9 @@ export async function refreshAccessToken(): Promise<string> {
         setAuthToken(newAccessToken);
         // Планируем следующее обновление
         scheduleProactiveRefresh(newAccessToken);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("auth-token-refreshed"));
+        }
 
         authLogger.info("Access token refreshed successfully");
         return newAccessToken;

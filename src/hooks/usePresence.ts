@@ -145,9 +145,10 @@ export function usePresence({ pathname, userId, isAuthLoading }: UsePresenceOpti
         return;
       }
       state.lastThrottleTick = now;
+      const needsInitialPing = state.lastStatus === null;
       const wasIdle = state.lastStatus === "idle";
       state.lastInteraction = now;
-      if (wasIdle) {
+      if (needsInitialPing || wasIdle) {
         dispatchPing(state, true);
       }
     };
@@ -158,6 +159,15 @@ export function usePresence({ pathname, userId, isAuthLoading }: UsePresenceOpti
         dispatchPing(state, true);
       }
       // На hidden намеренно НЕ шлём пинг — не продлеваем «онлайн» при уходе
+    };
+
+    const handlePageShow = () => {
+      state.lastInteraction = Date.now();
+      dispatchPing(state, true);
+    };
+
+    const handleTokenRefreshed = () => {
+      dispatchPing(state, true);
     };
 
     const handlePageHide = () => {
@@ -182,6 +192,8 @@ export function usePresence({ pathname, userId, isAuthLoading }: UsePresenceOpti
     window.addEventListener("keydown", handleInteraction, { passive: true });
     window.addEventListener("scroll", handleInteraction, { passive: true });
     window.addEventListener("touchstart", handleInteraction, { passive: true });
+    window.addEventListener("pageshow", handlePageShow);
+    window.addEventListener("auth-token-refreshed", handleTokenRefreshed);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("pagehide", handlePageHide);
 
@@ -191,6 +203,8 @@ export function usePresence({ pathname, userId, isAuthLoading }: UsePresenceOpti
       window.removeEventListener("keydown", handleInteraction);
       window.removeEventListener("scroll", handleInteraction);
       window.removeEventListener("touchstart", handleInteraction);
+      window.removeEventListener("pageshow", handlePageShow);
+      window.removeEventListener("auth-token-refreshed", handleTokenRefreshed);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", handlePageHide);
     };
