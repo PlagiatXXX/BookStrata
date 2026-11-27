@@ -456,6 +456,10 @@ export const saveAllSchema = {
                 },
               },
             },
+            missingBookIds: {
+              type: 'array',
+              items: { type: 'number' },
+            },
           },
         },
       },

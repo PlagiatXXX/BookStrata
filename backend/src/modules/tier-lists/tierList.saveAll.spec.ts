@@ -171,4 +171,80 @@ describe('tierList.service.saveAll', () => {
     expect(prisma.bookPlacement.update).toHaveBeenCalled();
     expect(prisma.bookPlacement.deleteMany).not.toHaveBeenCalled();
   });
+
+  it('при наличии призрачной книги (missingIds) новые книги из newBooks всё равно сохраняются в BookPlacement', async () => {
+    (prisma.bookPlacement.findMany as any).mockResolvedValue([]);
+    // В БД есть книга 200, но книга 999 удалена (призрак в клиентском состоянии)
+    (prisma.book.findMany as any).mockImplementation((args: any) => {
+      if (args.where?.id?.in) {
+        return Promise.resolve([{ id: 200 }]);
+      }
+      return Promise.resolve([]);
+    });
+    (prisma.book.create as any).mockResolvedValue({ id: 3076 });
+
+    const payload = {
+      newBooks: [
+        { tempId: 'local-new', title: 'Изображение 68', coverImageUrl: 'url' },
+      ],
+      placements: [
+        { bookId: 200, tierId: 10, rank: 0 },
+        { bookId: 999, tierId: 10, rank: 1 },
+        { bookId: 'local-new', tierId: null, rank: 0 },
+      ],
+    };
+
+    const result = await service.saveAll(tierListId, userId, payload);
+
+    expect(result.bookReplacements).toContainEqual({
+      tempId: 'local-new',
+      realId: '3076',
+    });
+    expect(result.missingBookIds).toEqual([999]);
+    // Призрак 999 пропущен, а живая 200 и новая 3076 обязательно созданы
+    expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
+      data: [
+        { tierListId, bookId: 200, tierId: 10, rank: 0 },
+        { tierListId, bookId: 3076, tierId: null, rank: 0 },
+      ],
+    });
+  });
+
+  it('при совпадении двух temp-книг в один bookId не создаёт дубль в createMany', async () => {
+    (prisma.bookPlacement.findMany as any).mockResolvedValue([]);
+    mocks.matchBook.mockResolvedValue({
+      book: {
+        id: 300,
+        title: 'Дюна',
+        author: 'Фрэнк Герберт',
+        authorId: 7,
+        coverImageUrl: 'url',
+        slug: 'dyuna',
+        status: 'published',
+        source: null,
+        externalId: null,
+        publishedYear: null,
+        rating: null,
+      },
+      confidence: 'HIGH',
+      candidates: [],
+    });
+
+    const payload = {
+      newBooks: [
+        { tempId: 'local-dup-1', title: 'Дюна', author: 'Фрэнк Герберт', coverImageUrl: 'url' },
+        { tempId: 'local-dup-2', title: 'Дюна', author: 'Фрэнк Герберт', coverImageUrl: 'url' },
+      ],
+      placements: [
+        { bookId: 'local-dup-1', tierId: 10, rank: 0 },
+        { bookId: 'local-dup-2', tierId: null, rank: 0 },
+      ],
+    };
+
+    await service.saveAll(tierListId, userId, payload);
+
+    expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
+      data: [{ tierListId, bookId: 300, tierId: 10, rank: 0 }],
+    });
+  });
 });

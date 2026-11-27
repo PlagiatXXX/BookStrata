@@ -71,6 +71,7 @@ export async function saveAll(
 
     const tierReplacements: { tempId: string; realId: string }[] = [];
     const bookReplacements: { tempId: string; realId: string }[] = [];
+    let missingBookIds: number[] = [];
 
     // --- 1. ОБРАБОТКА ТИРОВ ---
     if (payload.tiers) {
@@ -200,11 +201,7 @@ export async function saveAll(
       );
 
       // Проверяем существование книг и фильтруем «призрачные» (удалённые из каталога)
-      let validBookIds = new Set(existingBookIds);
-      // Temp-книги, получившие реальные ID через bookReplacementMap, тоже валидны
-      for (const realId of bookReplacementMap.values()) {
-        validBookIds.add(parseInt(realId, 10));
-      }
+      let validBookIds = new Set<number>();
       if (existingBookIds.length > 0) {
         const existingBooks = await tx.book.findMany({
           where: { id: { in: existingBookIds } },
@@ -214,8 +211,14 @@ export async function saveAll(
         const missingIds = existingBookIds.filter((id) => !existingBookIdSet.has(id));
         if (missingIds.length > 0) {
           logger.warn(`Призрачные книги в tier list ${realTierListId}: ${missingIds.join(", ")} — пропускаем`);
-          validBookIds = existingBookIdSet;
+          missingBookIds = missingIds;
         }
+        validBookIds = existingBookIdSet;
+      }
+      // Temp-книги, получившие реальные ID через bookReplacementMap, всегда валидны —
+      // добавляем ПОСЛЕ проверки existingBookIds, чтобы missingIds не затирали newBooks
+      for (const realId of bookReplacementMap.values()) {
+        validBookIds.add(parseInt(realId, 10));
       }
 
       const existingTierIds = Array.from(
@@ -253,7 +256,7 @@ export async function saveAll(
           .map((b) => [b.tempId, sanitize(b.thoughts as string)]),
       );
 
-      const finalPlacements = payload.placements.map((p) => {
+      const rawPlacements = payload.placements.map((p) => {
         let finalBookId: number;
         let isTempBook = false;
         if (typeof p.bookId === "string" && p.bookId.includes("-")) {
@@ -291,6 +294,15 @@ export async function saveAll(
           logger.warn(`Пропускаем placement с призрачной книгой bookId=${p.bookId} в tier list ${realTierListId}`);
           return false;
         }
+        return true;
+      });
+
+      // Дедуплицируем по bookId (PK [tierListId, bookId]): две temp-книги могут
+      // сматчиться в одну существующую книгу, иначе createMany упадёт с P2002
+      const seenBookIds = new Set<number>();
+      const finalPlacements = rawPlacements.filter((p) => {
+        if (seenBookIds.has(p.bookId)) return false;
+        seenBookIds.add(p.bookId);
         return true;
       });
 
@@ -364,6 +376,10 @@ export async function saveAll(
       data: { updatedAt: new Date() },
     });
 
-    return { bookReplacements, tierReplacements };
+    return {
+      bookReplacements,
+      tierReplacements,
+      ...(missingBookIds.length > 0 ? { missingBookIds } : {}),
+    };
   });
 }
